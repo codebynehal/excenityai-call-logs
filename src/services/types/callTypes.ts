@@ -2,7 +2,7 @@
 // Define the types for the API responses
 export interface CallRecord {
   id: string;
-  callType: "outboundPhoneCall" | "inboundPhoneCall";
+  callType: "outboundPhoneCall" | "inboundPhoneCall" | "webCall";
   customerPhone: string;
   assistantPhone: string;
   agentName: string;
