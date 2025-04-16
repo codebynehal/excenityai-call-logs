@@ -9,17 +9,17 @@ import { ArrowLeft, Calendar, Clock, Download, Headphones, MessageSquareText, Ph
 import { Link, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 
-// Define the call record type with transcript
+// Define the call record type
 interface CallRecord {
   id: string;
-  callType: "inbound" | "outbound";
+  callType: "outboundPhoneCall" | "inboundPhoneCall";
   customerPhone: string;
   agentName: string;
   date: string;
   time: string;
   duration: string;
-  endReason: "completed" | "missed" | "busy" | "failed";
-  recording?: string;
+  endReason: string;
+  recordingUrl?: string;
   summary?: string;
   transcript?: {
     time: string;
@@ -28,68 +28,44 @@ interface CallRecord {
   }[];
 }
 
-// Mock data for a single call record
+// Mock data based on the sample call record
 const mockCallRecord: CallRecord = {
-  id: "call-1",
-  callType: "inbound",
-  customerPhone: "+1 (555) 123-4567",
-  agentName: "John Doe",
-  date: "2025-04-15",
-  time: "10:30 AM",
-  duration: "5:23",
-  endReason: "completed",
-  recording: "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3", // example audio URL
-  summary: "Customer called about their recent order #12345. They reported that item was damaged during shipping. Agent offered a replacement and expedited shipping. Customer was satisfied with the resolution.",
+  id: "3743b66d-6e42-4321-9919-3b48ba875818",
+  callType: "outboundPhoneCall",
+  customerPhone: "+61411453140",
+  agentName: "Jessica",
+  date: "2025-04-16",
+  time: "03:09 AM",
+  duration: "1:03",
+  endReason: "customer-ended-call",
+  recordingUrl: "https://storage.vapi.ai/3743b66d-6e42-4321-9919-3b48ba875818-1744773051620-49d24ed8-dfdc-4560-8f32-c6125ab83886-mono.wav",
+  summary: `The call was between Jessica from Business Jam and Matt, who had previously used their business valuation tool. 
+  
+  Key Points:
+  - Jessica called to follow up on Matt's use of their business valuation tool
+  - Matt indicated he thought the valuation estimate was "a little bit low"
+  - Jessica offered to ask additional questions to provide a more refined valuation
+  - Matt agreed to answer questions, but his subsequent responses became incoherent and disjointed`,
   transcript: [
     {
       time: "0:00",
-      speaker: "Agent",
-      message: "Thank you for calling customer support. My name is John. How can I help you today?"
+      speaker: "AI",
+      message: "Hi, Matt. It's Jessica from Business Jam. You used our business valuation tool recently. Just wanted to check what you thought of the estimate that came through."
     },
     {
-      time: "0:08",
-      speaker: "Customer",
-      message: "Hi John, I'm calling about my recent order #12345. I received it yesterday, but the item was damaged during shipping."
+      time: "0:19",
+      speaker: "Matt",
+      message: "It seems a little bit low."
     },
     {
-      time: "0:21",
-      speaker: "Agent",
-      message: "I'm sorry to hear that your order arrived damaged. Let me pull up your order details."
+      time: "0:26",
+      speaker: "AI",
+      message: "Oh, I see. Well, I'm here to give you a more refined version. Sometimes the tool doesn't catch everything, and a few extra details can make a big difference. Would it be okay if I ask a few quick questions?"
     },
     {
-      time: "0:35",
-      speaker: "Agent",
-      message: "I can see your order here. I'd like to offer you a replacement with expedited shipping at no additional cost. Would that work for you?"
-    },
-    {
-      time: "0:51",
-      speaker: "Customer",
-      message: "Yes, that would be great. How soon could I get the replacement?"
-    },
-    {
-      time: "1:02",
-      speaker: "Agent",
-      message: "I can process this right now and you should receive the replacement within 2 business days. I'll also send you a return label for the damaged item."
-    },
-    {
-      time: "1:18",
-      speaker: "Customer",
-      message: "That sounds perfect. Thank you for your help."
-    },
-    {
-      time: "1:24",
-      speaker: "Agent",
-      message: "You're welcome. Is there anything else I can assist you with today?"
-    },
-    {
-      time: "1:30",
-      speaker: "Customer",
-      message: "No, that's all. Thanks again."
-    },
-    {
-      time: "1:34",
-      speaker: "Agent",
-      message: "Thank you for contacting us. Have a great day!"
+      time: "0:52",
+      speaker: "Matt",
+      message: "Yeah. No problem. Maybe you can't be hearing that. No doubt, sir. Back end of the van. Yes. That's that's okay. Yeah. At least music. Yeah."
     }
   ]
 };
@@ -152,11 +128,10 @@ export default function CallDetails() {
 
   // Download recording function
   const downloadRecording = () => {
-    if (callRecord?.recording) {
-      // In a real app, this would download the actual file
+    if (callRecord?.recordingUrl) {
       const link = document.createElement('a');
-      link.href = callRecord.recording;
-      link.download = `call-recording-${callId}.mp3`;
+      link.href = callRecord.recordingUrl;
+      link.download = `call-recording-${callId}.wav`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -164,9 +139,9 @@ export default function CallDetails() {
   };
 
   // Display the call icon based on call type
-  const getCallIcon = (type?: "inbound" | "outbound") => {
+  const getCallIcon = (type?: string) => {
     if (!type) return null;
-    return type === "inbound" ? (
+    return type === "inboundPhoneCall" ? (
       <PhoneIncoming className="h-5 w-5 text-green-500" />
     ) : (
       <PhoneOutgoing className="h-5 w-5 text-blue-500" />
@@ -177,14 +152,7 @@ export default function CallDetails() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" asChild>
-            <Link to="/calls">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Skeleton className="h-8 w-64" />
-        </div>
+        <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Skeleton className="h-64 w-full lg:col-span-2" />
           <Skeleton className="h-64 w-full" />
@@ -251,7 +219,7 @@ export default function CallDetails() {
           <CardContent className="space-y-4">
             <audio 
               ref={audioRef} 
-              src={callRecord.recording}
+              src={callRecord.recordingUrl}
               onTimeUpdate={handleTimeUpdate}
               onLoadedMetadata={handleLoadedMetadata}
               onEnded={handleEnded}
@@ -317,21 +285,9 @@ export default function CallDetails() {
                 <div className="flex items-center gap-1.5">
                   {getCallIcon(callRecord.callType)}
                   <span className="font-medium">
-                    {callRecord.callType === "inbound" ? "Inbound" : "Outbound"}
+                    {callRecord.callType === "outboundPhoneCall" ? "Outbound" : "Inbound"}
                   </span>
                 </div>
-              </div>
-              <Separator />
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <Badge className={
-                  callRecord.endReason === "completed" ? "bg-green-600" : 
-                  callRecord.endReason === "missed" ? "bg-yellow-600" : 
-                  callRecord.endReason === "busy" ? "bg-orange-600" : "bg-red-600"
-                }>
-                  {callRecord.endReason.charAt(0).toUpperCase() + callRecord.endReason.slice(1)}
-                </Badge>
               </div>
               <Separator />
               
@@ -410,25 +366,25 @@ export default function CallDetails() {
                     <div 
                       key={index} 
                       className={`flex gap-4 ${
-                        entry.speaker === "Agent" 
+                        entry.speaker === "AI" 
                           ? "flex-row" 
                           : "flex-row-reverse"
                       }`}
                     >
                       <div className="flex flex-col items-center gap-2">
                         <div className={`w-8 h-8 flex items-center justify-center rounded-full ${
-                          entry.speaker === "Agent" 
+                          entry.speaker === "AI" 
                             ? "bg-orange-500" 
                             : "bg-gray-600"
                         }`}>
-                          {entry.speaker === "Agent" ? "A" : "C"}
+                          {entry.speaker === "AI" ? "A" : "C"}
                         </div>
                         <div className="text-xs text-muted-foreground">
                           {entry.time}
                         </div>
                       </div>
                       <div className={`max-w-[75%] rounded-lg p-3 ${
-                        entry.speaker === "Agent" 
+                        entry.speaker === "AI" 
                           ? "bg-secondary rounded-tl-none" 
                           : "bg-muted rounded-tr-none"
                       }`}>
