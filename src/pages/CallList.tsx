@@ -26,6 +26,21 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { CallRecord, fetchCalls } from "@/services/vapiService";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Define call types
 type CallType = "inbound" | "outbound" | "all";
@@ -37,6 +52,10 @@ export default function CallList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [selectedEndReason, setSelectedEndReason] = useState<CallEndReason>("all");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   
   // Fetch calls using React Query
   const { data: calls = [], isLoading, error } = useQuery({
@@ -82,6 +101,22 @@ export default function CallList() {
   // Get unique agents
   const uniqueAgents = Array.from(new Set(calls.map((call) => call.agentName)));
 
+  // Handle pagination
+  const totalCalls = filteredCalls.length;
+  const totalPages = Math.max(1, Math.ceil(totalCalls / perPage));
+  
+  // Ensure current page is valid after filters or per page changes
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
+  
+  // Get the paginated slice of calls
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = Math.min(startIndex + perPage, totalCalls);
+  const paginatedCalls = filteredCalls.slice(startIndex, endIndex);
+
   // Display the call icon based on call type
   const getCallIcon = (type: string) => {
     return type === "inboundPhoneCall" ? (
@@ -105,6 +140,55 @@ export default function CallList() {
       default:
         return <Badge>{reason}</Badge>;
     }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
+    
+    if (totalPages <= maxPagesToShow) {
+      // Show all pages if there are few
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Always show first page
+      pageNumbers.push(1);
+      
+      // Calculate start and end of the middle section
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(currentPage + 1, totalPages - 1);
+      
+      // Adjust if we're near the start or end
+      if (currentPage <= 3) {
+        endPage = Math.min(maxPagesToShow - 1, totalPages - 1);
+      } else if (currentPage >= totalPages - 2) {
+        startPage = Math.max(2, totalPages - (maxPagesToShow - 2));
+      }
+      
+      // Add ellipsis before middle section if needed
+      if (startPage > 2) {
+        pageNumbers.push('ellipsis-start');
+      }
+      
+      // Add middle section
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+      
+      // Add ellipsis after middle section if needed
+      if (endPage < totalPages - 1) {
+        pageNumbers.push('ellipsis-end');
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        pageNumbers.push(totalPages);
+      }
+    }
+    
+    return pageNumbers;
   };
 
   return (
@@ -264,7 +348,7 @@ export default function CallList() {
                 </TableBody>
               ) : (
                 <TableBody>
-                  {filteredCalls.map((call) => (
+                  {paginatedCalls.map((call) => (
                     <TableRow key={call.id}>
                       <TableCell>{getCallIcon(call.callType)}</TableCell>
                       <TableCell className="font-medium">
@@ -304,6 +388,67 @@ export default function CallList() {
                 </TableBody>
               )}
             </Table>
+          </div>
+          
+          {/* Pagination controls */}
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-muted-foreground">Rows per page</span>
+              <Select
+                value={perPage.toString()}
+                onValueChange={(value) => {
+                  setPerPage(Number(value));
+                  setCurrentPage(1); // Reset to first page when changing items per page
+                }}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder="10" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {startIndex + 1}-{endIndex} of {totalCalls}
+            </div>
+            
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                
+                {getPageNumbers().map((pageNumber, index) => (
+                  <PaginationItem key={index}>
+                    {pageNumber === 'ellipsis-start' || pageNumber === 'ellipsis-end' ? (
+                      <div className="px-4 py-2">...</div>
+                    ) : (
+                      <PaginationLink
+                        onClick={() => typeof pageNumber === 'number' && setCurrentPage(pageNumber)}
+                        isActive={currentPage === pageNumber}
+                        className="cursor-pointer"
+                      >
+                        {pageNumber}
+                      </PaginationLink>
+                    )}
+                  </PaginationItem>
+                ))}
+                
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           </div>
         </CardContent>
       </Card>
