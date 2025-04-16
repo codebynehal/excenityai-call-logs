@@ -60,6 +60,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_assistant_mappings: {
+        Row: {
+          assistant_id: string
+          created_at: string
+          id: string
+          user_email: string
+        }
+        Insert: {
+          assistant_id: string
+          created_at?: string
+          id?: string
+          user_email: string
+        }
+        Update: {
+          assistant_id?: string
+          created_at?: string
+          id?: string
+          user_email?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

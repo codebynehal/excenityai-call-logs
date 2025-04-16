@@ -29,6 +29,7 @@ export default function AdminPanel() {
   const [newAssistantId, setNewAssistantId] = useState("");
   const [userEmails, setUserEmails] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -39,7 +40,20 @@ export default function AdminPanel() {
 
   // Load user mappings
   useEffect(() => {
-    setUserMappings(getUserAssistantMappings());
+    const loadMappings = async () => {
+      setIsLoading(true);
+      try {
+        const mappings = await getUserAssistantMappings();
+        setUserMappings(mappings);
+      } catch (error) {
+        console.error("Error loading mappings:", error);
+        toast.error("Failed to load user mappings");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadMappings();
   }, []);
 
   // Fetch users - using a different approach
@@ -92,29 +106,45 @@ export default function AdminPanel() {
     }
   }, [isAdmin, userMappings]);
 
-  const handleAddMapping = () => {
+  const handleAddMapping = async () => {
     if (!selectedUserEmail || !newAssistantId) {
       toast.error("Please select a user and enter an assistant ID");
       return;
     }
 
+    setIsSaving(true);
     try {
-      addUserAssistantMapping(selectedUserEmail, newAssistantId);
-      setUserMappings(getUserAssistantMappings());
-      toast.success(`Assistant added for ${selectedUserEmail}`);
-      setNewAssistantId("");
+      const success = await addUserAssistantMapping(selectedUserEmail, newAssistantId);
+      if (success) {
+        // Reload mappings
+        const mappings = await getUserAssistantMappings();
+        setUserMappings(mappings);
+        toast.success(`Assistant added for ${selectedUserEmail}`);
+        setNewAssistantId("");
+      }
     } catch (error) {
       toast.error("Failed to add mapping");
+      console.error("Error adding mapping:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleRemoveMapping = (userEmail: string, assistantId: string) => {
+  const handleRemoveMapping = async (userEmail: string, assistantId: string) => {
+    setIsSaving(true);
     try {
-      removeUserAssistantMapping(userEmail, assistantId);
-      setUserMappings(getUserAssistantMappings());
-      toast.success("Mapping removed successfully");
+      const success = await removeUserAssistantMapping(userEmail, assistantId);
+      if (success) {
+        // Reload mappings
+        const mappings = await getUserAssistantMappings();
+        setUserMappings(mappings);
+        toast.success("Mapping removed successfully");
+      }
     } catch (error) {
       toast.error("Failed to remove mapping");
+      console.error("Error removing mapping:", error);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -181,9 +211,18 @@ export default function AdminPanel() {
                 />
               </div>
             </div>
-            <Button onClick={handleAddMapping} className="w-full" size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Access
+            <Button 
+              onClick={handleAddMapping} 
+              className="w-full" 
+              size="sm"
+              disabled={isSaving || !selectedUserEmail || !newAssistantId}
+            >
+              {isSaving ? "Adding..." : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Access
+                </>
+              )}
             </Button>
           </div>
 
@@ -199,7 +238,11 @@ export default function AdminPanel() {
               </Badge>
             </div>
             
-            {filteredMappings.length === 0 ? (
+            {isLoading ? (
+              <div className="text-center py-8 text-muted-foreground">
+                Loading mappings...
+              </div>
+            ) : filteredMappings.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 {searchTerm ? "No matching mappings found" : "No mappings yet"}
               </div>
@@ -222,6 +265,7 @@ export default function AdminPanel() {
                             size="icon"
                             className="h-4 w-4 p-0 text-muted-foreground hover:text-foreground"
                             onClick={() => handleRemoveMapping(mapping.userEmail, assistantId)}
+                            disabled={isSaving}
                           >
                             <X className="h-3 w-3" />
                           </Button>

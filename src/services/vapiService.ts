@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define the types for the API responses
 export interface CallRecord {
@@ -246,64 +247,135 @@ export const fetchCallById = async (callId: string): Promise<CallRecord | null> 
   }
 };
 
-// Local storage functions for user-assistant mappings
+// User-assistant mappings interface
 export interface UserAssistantMapping {
   userEmail: string;
   assistantIds: string[];
 }
 
-const USER_ASSISTANT_MAPPINGS_KEY = 'user_assistant_mappings';
-
-export const getUserAssistantMappings = (): UserAssistantMapping[] => {
-  const mappingsStr = localStorage.getItem(USER_ASSISTANT_MAPPINGS_KEY);
-  return mappingsStr ? JSON.parse(mappingsStr) : [];
-};
-
-export const saveUserAssistantMappings = (mappings: UserAssistantMapping[]): void => {
-  localStorage.setItem(USER_ASSISTANT_MAPPINGS_KEY, JSON.stringify(mappings));
-};
-
-export const getUserAllowedAssistantIds = (userEmail: string): string[] => {
-  const mappings = getUserAssistantMappings();
-  const userMapping = mappings.find(m => m.userEmail.toLowerCase() === userEmail.toLowerCase());
-  return userMapping?.assistantIds || [];
-};
-
-export const addUserAssistantMapping = (userEmail: string, assistantId: string): void => {
-  const mappings = getUserAssistantMappings();
-  const existingIndex = mappings.findIndex(m => m.userEmail.toLowerCase() === userEmail.toLowerCase());
-  
-  if (existingIndex >= 0) {
-    // User exists, add assistant if not already mapped
-    if (!mappings[existingIndex].assistantIds.includes(assistantId)) {
-      mappings[existingIndex].assistantIds.push(assistantId);
+// Get all user-assistant mappings from Supabase
+export const getUserAssistantMappings = async (): Promise<UserAssistantMapping[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_assistant_mappings')
+      .select('user_email, assistant_id');
+    
+    if (error) {
+      console.error("Error fetching user mappings:", error);
+      toast.error("Failed to load user mappings");
+      return [];
     }
-  } else {
-    // New user
-    mappings.push({
-      userEmail,
-      assistantIds: [assistantId]
+    
+    // Group by user_email
+    const mappings: UserAssistantMapping[] = [];
+    const emailMap: Record<string, string[]> = {};
+    
+    data.forEach(item => {
+      if (!emailMap[item.user_email]) {
+        emailMap[item.user_email] = [];
+      }
+      emailMap[item.user_email].push(item.assistant_id);
     });
+    
+    // Convert to array format
+    Object.keys(emailMap).forEach(userEmail => {
+      mappings.push({
+        userEmail,
+        assistantIds: emailMap[userEmail]
+      });
+    });
+    
+    return mappings;
+  } catch (error) {
+    console.error("Error in getUserAssistantMappings:", error);
+    toast.error("Failed to load user mappings");
+    return [];
   }
-  
-  saveUserAssistantMappings(mappings);
 };
 
-export const removeUserAssistantMapping = (userEmail: string, assistantId: string): void => {
-  const mappings = getUserAssistantMappings();
-  const existingIndex = mappings.findIndex(m => m.userEmail.toLowerCase() === userEmail.toLowerCase());
-  
-  if (existingIndex >= 0) {
-    // Filter out the assistant ID
-    mappings[existingIndex].assistantIds = mappings[existingIndex].assistantIds.filter(
-      id => id !== assistantId
-    );
+// Get allowed assistant IDs for a specific user
+export const getUserAllowedAssistantIds = async (userEmail: string): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_assistant_mappings')
+      .select('assistant_id')
+      .eq('user_email', userEmail.toLowerCase());
     
-    // Remove the user if they have no assistants left
-    if (mappings[existingIndex].assistantIds.length === 0) {
-      mappings.splice(existingIndex, 1);
+    if (error) {
+      console.error("Error fetching user allowed assistants:", error);
+      return [];
     }
     
-    saveUserAssistantMappings(mappings);
+    return data.map(item => item.assistant_id);
+  } catch (error) {
+    console.error("Error in getUserAllowedAssistantIds:", error);
+    return [];
+  }
+};
+
+// Add a new user-assistant mapping
+export const addUserAssistantMapping = async (userEmail: string, assistantId: string): Promise<boolean> => {
+  try {
+    // Check if mapping already exists
+    const { data: existingData, error: checkError } = await supabase
+      .from('user_assistant_mappings')
+      .select('id')
+      .eq('user_email', userEmail.toLowerCase())
+      .eq('assistant_id', assistantId)
+      .single();
+    
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is "not found"
+      console.error("Error checking existing mapping:", checkError);
+      toast.error("Failed to check existing mapping");
+      return false;
+    }
+    
+    // If mapping already exists, just return success
+    if (existingData) {
+      return true;
+    }
+    
+    // Insert new mapping
+    const { error } = await supabase
+      .from('user_assistant_mappings')
+      .insert({
+        user_email: userEmail.toLowerCase(),
+        assistant_id: assistantId
+      });
+    
+    if (error) {
+      console.error("Error adding user mapping:", error);
+      toast.error("Failed to add user mapping");
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in addUserAssistantMapping:", error);
+    toast.error("Failed to add user mapping");
+    return false;
+  }
+};
+
+// Remove a user-assistant mapping
+export const removeUserAssistantMapping = async (userEmail: string, assistantId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('user_assistant_mappings')
+      .delete()
+      .eq('user_email', userEmail.toLowerCase())
+      .eq('assistant_id', assistantId);
+    
+    if (error) {
+      console.error("Error removing user mapping:", error);
+      toast.error("Failed to remove user mapping");
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Error in removeUserAssistantMapping:", error);
+    toast.error("Failed to remove user mapping");
+    return false;
   }
 };
