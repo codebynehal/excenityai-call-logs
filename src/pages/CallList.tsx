@@ -30,6 +30,13 @@ const CallList = () => {
   const [pageSize] = useState(10);
   const [paginatedCalls, setPaginatedCalls] = useState<typeof calls>([]);
 
+  // Update tab from URL parameter when component mounts or URL changes
+  useEffect(() => {
+    if (callType) {
+      setTab(callType);
+    }
+  }, [callType]);
+
   // Filter calls based on tab, assistantFilter, and search term
   useEffect(() => {
     let filtered = [...calls];
