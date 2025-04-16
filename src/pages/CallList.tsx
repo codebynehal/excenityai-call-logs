@@ -4,12 +4,15 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useCallContext } from "@/contexts/CallContext";
 import CallFilters from "@/components/calls/CallFilters";
 import CallTabs from "@/components/calls/CallTabs";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 const CallList = () => {
   const { callType } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { calls, isLoading } = useCallContext();
+  const { calls, isLoading, refreshCalls, lastFetched } = useCallContext();
   
   // Get page from URL or default to 1
   const pageFromUrl = searchParams.get("page");
@@ -20,6 +23,7 @@ const CallList = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [assistantFilter, setAssistantFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -97,6 +101,19 @@ const CallList = () => {
     navigate(`/calls/${value === "all" ? "" : value}`, { replace: true });
   };
 
+  // Handle refresh button click
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshCalls();
+      toast.success("Call list refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing calls:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   // Get unique assistant IDs and names for the filter
   const uniqueAssistants = calls.reduce((acc: {id: string, name: string}[], call) => {
     if (!acc.some(a => a.id === call.assistantId)) {
@@ -111,20 +128,48 @@ const CallList = () => {
   // Calculate total pages
   const totalPages = Math.max(1, Math.ceil(filteredCalls.length / pageSize));
 
+  // Format last fetched time
+  const getLastFetchedText = () => {
+    if (!lastFetched) return "Never refreshed";
+    
+    const now = new Date();
+    const diffMs = now.getTime() - lastFetched.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "Updated just now";
+    if (diffMins === 1) return "Updated 1 minute ago";
+    return `Updated ${diffMins} minutes ago`;
+  };
+
   return (
     <div className="container py-6 max-w-5xl">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl font-bold tracking-tight">Call History</h1>
-          <CallFilters 
-            sortBy={sortBy}
-            setSortBy={setSortBy}
-            assistantFilter={assistantFilter}
-            setAssistantFilter={setAssistantFilter}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            uniqueAssistants={uniqueAssistants}
-          />
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold tracking-tight">Call History</h1>
+            <p className="text-sm text-muted-foreground">{getLastFetchedText()}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isLoading || isRefreshing}
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <CallFilters 
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+              assistantFilter={assistantFilter}
+              setAssistantFilter={setAssistantFilter}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              uniqueAssistants={uniqueAssistants}
+            />
+          </div>
         </div>
         
         <CallTabs 

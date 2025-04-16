@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { CallRecord } from "@/services/vapiService";
 import CallListItem from "@/components/calls/CallListItem";
+import CallListSkeleton from "@/components/calls/CallListSkeleton";
 import { 
   Pagination, 
   PaginationContent, 
@@ -37,8 +38,15 @@ const CallListContent = ({
 }: CallListContentProps) => {
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <p className="text-muted-foreground">Loading calls...</p>
+      <div className="space-y-4">
+        <div className="flex justify-between">
+          <span className="text-sm text-muted-foreground">Loading calls...</span>
+          <Badge variant="outline" className="animate-pulse">
+            Loading...
+          </Badge>
+        </div>
+        <Separator />
+        <CallListSkeleton />
       </div>
     );
   }
