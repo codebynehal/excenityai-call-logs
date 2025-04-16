@@ -4,7 +4,7 @@ import { Navbar } from "./Navbar";
 import { Sidebar } from "./Sidebar";
 import { Outlet } from "react-router-dom";
 
-export function MainLayout() {
+const MainLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -22,4 +22,6 @@ export function MainLayout() {
       </div>
     </div>
   );
-}
+};
+
+export default MainLayout;
