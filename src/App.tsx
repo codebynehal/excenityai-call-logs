@@ -14,6 +14,7 @@ import { MainLayout } from "./components/layout/MainLayout";
 import CallList from "./pages/CallList";
 import CallDetails from "./pages/CallDetails";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -95,9 +96,6 @@ const AppRoutes = () => (
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
-
-// Need to import toast for the error message in AdminRoute
-import { toast } from "sonner";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
