@@ -2,7 +2,7 @@
 import React from "react";
 import { Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CallRecord } from "@/services/vapiService";
+import { CallRecord } from "@/services/types/callTypes";
 import CallListContent from "./CallListContent";
 
 interface CallTabsProps {

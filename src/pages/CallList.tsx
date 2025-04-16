@@ -7,6 +7,7 @@ import CallTabs from "@/components/calls/CallTabs";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { CallRecord } from "@/services/types/callTypes";
 
 const CallList = () => {
   const { callType } = useParams();
@@ -18,7 +19,7 @@ const CallList = () => {
   const pageFromUrl = searchParams.get("page");
   const initialPage = pageFromUrl ? parseInt(pageFromUrl, 10) : 1;
   
-  const [filteredCalls, setFilteredCalls] = useState<typeof calls>([]);
+  const [filteredCalls, setFilteredCalls] = useState<CallRecord[]>([]);
   const [tab, setTab] = useState(callType || "all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [assistantFilter, setAssistantFilter] = useState<string>("all");
@@ -28,7 +29,8 @@ const CallList = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [pageSize] = useState(10);
-  const [paginatedCalls, setPaginatedCalls] = useState<typeof calls>([]);
+  const [paginatedCalls, setPaginatedCalls] = useState<CallRecord[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Update tab from URL parameter when component mounts or URL changes
   useEffect(() => {
@@ -69,6 +71,7 @@ const CallList = () => {
     });
     
     setFilteredCalls(filtered);
+    setTotalPages(Math.max(1, Math.ceil(filtered.length / pageSize)));
     
     // Reset to first page when filters change
     if (searchTerm || assistantFilter !== "all" || sortBy) {
@@ -79,7 +82,7 @@ const CallList = () => {
         setSearchParams(searchParams);
       }
     }
-  }, [calls, tab, assistantFilter, sortBy, searchTerm]);
+  }, [calls, tab, assistantFilter, sortBy, searchTerm, pageSize]);
 
   // Handle pagination
   useEffect(() => {
@@ -146,9 +149,6 @@ const CallList = () => {
     }
     return acc;
   }, []);
-  
-  // Calculate total pages
-  const totalPages = Math.max(1, Math.ceil(filteredCalls.length / pageSize));
 
   // Format last fetched time
   const getLastFetchedText = () => {
