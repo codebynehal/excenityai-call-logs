@@ -283,6 +283,12 @@ export default function CallDetails() {
                 <span className="text-sm text-muted-foreground">Phone Number</span>
                 <span className="font-medium">{callRecord.customerPhone}</span>
               </div>
+              <Separator />
+              
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Assistant</span>
+                <span className="font-medium">{callRecord.assistantName}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
