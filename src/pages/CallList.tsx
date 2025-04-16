@@ -1,9 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { toast } from "sonner";
-import { CallRecord, fetchCalls } from "@/services/vapiService";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCallContext } from "@/contexts/CallContext";
 import CallFilters from "@/components/calls/CallFilters";
 import CallTabs from "@/components/calls/CallTabs";
 
@@ -11,15 +9,13 @@ const CallList = () => {
   const { callType } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, isAdmin } = useAuth();
+  const { calls, isLoading } = useCallContext();
   
   // Get page from URL or default to 1
   const pageFromUrl = searchParams.get("page");
   const initialPage = pageFromUrl ? parseInt(pageFromUrl, 10) : 1;
   
-  const [calls, setCalls] = useState<CallRecord[]>([]);
-  const [filteredCalls, setFilteredCalls] = useState<CallRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [filteredCalls, setFilteredCalls] = useState<typeof calls>([]);
   const [tab, setTab] = useState(callType || "all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [assistantFilter, setAssistantFilter] = useState<string>("all");
@@ -28,26 +24,7 @@ const CallList = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [pageSize] = useState(10);
-  const [paginatedCalls, setPaginatedCalls] = useState<CallRecord[]>([]);
-
-  // Load calls
-  useEffect(() => {
-    const loadCalls = async () => {
-      setIsLoading(true);
-      try {
-        // If admin, fetch all calls, otherwise fetch only user's calls
-        const callsData = await fetchCalls(isAdmin ? null : user?.email);
-        setCalls(callsData);
-      } catch (error) {
-        console.error("Failed to load calls:", error);
-        toast.error("Failed to load calls. Please try again.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    loadCalls();
-  }, [user, isAdmin]);
+  const [paginatedCalls, setPaginatedCalls] = useState<typeof calls>([]);
 
   // Filter calls based on tab, assistantFilter, and search term
   useEffect(() => {

@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Phone, PhoneCall, Clock } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CallRecord } from "@/services/vapiService";
 import CallListContent from "./CallListContent";
@@ -41,11 +41,11 @@ const CallTabs = ({
           All Calls
         </TabsTrigger>
         <TabsTrigger value="inboundPhoneCall" className="flex items-center gap-2">
-          <PhoneCall className="h-4 w-4" />
+          <PhoneIncoming className="h-4 w-4" />
           Inbound
         </TabsTrigger>
         <TabsTrigger value="outboundPhoneCall" className="flex items-center gap-2">
-          <Clock className="h-4 w-4" />
+          <PhoneOutgoing className="h-4 w-4" />
           Outbound
         </TabsTrigger>
       </TabsList>
