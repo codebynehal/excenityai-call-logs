@@ -23,19 +23,19 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
   const getTranscriptSnippet = (): string => {
     if (!call.transcript) return "";
     
-    // Handle string transcript
-    if (typeof call.transcript === 'string') {
-      return call.transcript.slice(0, 30) + "...";
+    // Handle array transcript
+    if (Array.isArray(call.transcript) && call.transcript.length > 0) {
+      const firstMessage = call.transcript[0];
+      if (firstMessage && typeof firstMessage.message === 'string') {
+        const message = firstMessage.message;
+        return message.length > 30 ? `${message.substring(0, 30)}...` : message;
+      }
     }
     
-    // Handle array transcript with type checking
-    if (Array.isArray(call.transcript)) {
-      const firstMessage = call.transcript[0];
-      if (firstMessage && typeof firstMessage === 'object' && 'message' in firstMessage) {
-        // Access message safely
-        const message = String(firstMessage.message || "");
-        return message.slice(0, 30) + "...";
-      }
+    // Handle string transcript (fallback)
+    if (typeof call.transcript === 'string') {
+      const transcript = call.transcript;
+      return transcript.length > 30 ? `${transcript.substring(0, 30)}...` : transcript;
     }
     
     return "No transcript available";
