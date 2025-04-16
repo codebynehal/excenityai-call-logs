@@ -7,6 +7,7 @@ export interface CallRecord {
   assistantPhone: string;
   agentName: string;
   assistantId: string;
+  assistantName: string; // Added assistantName field
   date: string;
   time: string;
   duration: string;

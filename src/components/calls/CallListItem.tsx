@@ -65,7 +65,7 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
             <span className="flex items-center gap-1">
               <User className="h-3 w-3" />
               <span className="truncate max-w-[120px]">
-                {call.assistantId ? call.assistantId.substring(0, 8) + "..." : "Unknown"}
+                {call.assistantName || "Unknown Assistant"}
               </span>
             </span>
           </div>

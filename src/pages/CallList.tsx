@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { AdminSearch } from "@/components/admin/AdminSearch";
 
 const CallList = () => {
   const { callType } = useParams();
@@ -34,6 +35,7 @@ const CallList = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [allowedAssistantIds, setAllowedAssistantIds] = useState<string[]>([]);
   const [assistantFilter, setAssistantFilter] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Load calls
   useEffect(() => {
@@ -59,7 +61,7 @@ const CallList = () => {
     loadCalls();
   }, [user, isAdmin]);
 
-  // Filter calls based on tab, permissions, and assistantFilter
+  // Filter calls based on tab, permissions, assistantFilter, and search term
   useEffect(() => {
     let filtered = [...calls];
     
@@ -85,6 +87,16 @@ const CallList = () => {
       }
     }
     
+    // Apply search filter if there's a search term
+    if (searchTerm.trim()) {
+      const lowercaseSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(call => 
+        call.customerPhone.toLowerCase().includes(lowercaseSearch) ||
+        call.assistantPhone.toLowerCase().includes(lowercaseSearch) ||
+        call.assistantName.toLowerCase().includes(lowercaseSearch)
+      );
+    }
+    
     // Sort calls
     filtered.sort((a, b) => {
       const dateA = new Date(`${a.date} ${a.time}`).getTime();
@@ -93,7 +105,7 @@ const CallList = () => {
     });
     
     setFilteredCalls(filtered);
-  }, [calls, tab, assistantFilter, sortBy, isAdmin, user, allowedAssistantIds]);
+  }, [calls, tab, assistantFilter, sortBy, isAdmin, user, allowedAssistantIds, searchTerm]);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -102,46 +114,58 @@ const CallList = () => {
     navigate(`/calls/${value === "all" ? "" : value}`, { replace: true });
   };
 
-  // Get unique assistant IDs for the filter
-  const uniqueAssistantIds = Array.from(new Set(calls.map(call => call.assistantId)));
+  // Get unique assistant IDs and names for the filter
+  const uniqueAssistants = calls.reduce((acc: {id: string, name: string}[], call) => {
+    if (!acc.some(a => a.id === call.assistantId)) {
+      acc.push({
+        id: call.assistantId,
+        name: call.assistantName || `Assistant ${call.assistantId.substring(0, 8)}...`
+      });
+    }
+    return acc;
+  }, []);
 
   return (
     <div className="container py-6 max-w-5xl">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-2xl font-bold tracking-tight">Call History</h1>
-          <div className="flex items-center gap-2">
-            <Select
-              value={sortBy}
-              onValueChange={(value) => setSortBy(value as "newest" | "oldest")}
-            >
-              <SelectTrigger className="w-[150px]">
-                <Calendar className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest first</SelectItem>
-                <SelectItem value="oldest">Oldest first</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <AdminSearch searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
             
-            <Select
-              value={assistantFilter}
-              onValueChange={setAssistantFilter}
-            >
-              <SelectTrigger className="w-[150px]">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Assistant" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All assistants</SelectItem>
-                {uniqueAssistantIds.map(id => (
-                  <SelectItem key={id} value={id}>
-                    {id.substring(0, 8)}...
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select
+                value={sortBy}
+                onValueChange={(value) => setSortBy(value as "newest" | "oldest")}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest first</SelectItem>
+                  <SelectItem value="oldest">Oldest first</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select
+                value={assistantFilter}
+                onValueChange={setAssistantFilter}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <Filter className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Assistant" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All assistants</SelectItem>
+                  {uniqueAssistants.map(assistant => (
+                    <SelectItem key={assistant.id} value={assistant.id}>
+                      {assistant.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
