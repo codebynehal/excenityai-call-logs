@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -46,6 +45,7 @@ const AdminRoute = () => {
   }
   
   if (!isAdmin) {
+    toast.error("Access denied. Admin privileges required.");
     return <Navigate to="/calls" replace />;
   }
   
@@ -54,13 +54,18 @@ const AdminRoute = () => {
 
 // Public only route (redirects to /calls if logged in)
 const PublicOnlyRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
   
   if (user) {
+    // If the user is an admin, redirect to admin panel
+    if (isAdmin) {
+      return <Navigate to="/admin" replace />;
+    }
+    // Otherwise redirect to calls
     return <Navigate to="/calls" replace />;
   }
   
@@ -71,8 +76,8 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
     <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
-    <Route path="/admin-login" element={<AdminLogin />} />
-    <Route path="/admin-signup" element={<AdminSignUp />} />
+    <Route path="/admin-login" element={<PublicOnlyRoute><AdminLogin /></PublicOnlyRoute>} />
+    <Route path="/admin-signup" element={<PublicOnlyRoute><AdminSignUp /></PublicOnlyRoute>} />
     
     <Route element={<ProtectedRoute />}>
       <Route element={<MainLayout />}>
@@ -90,6 +95,9 @@ const AppRoutes = () => (
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
+
+// Need to import toast for the error message in AdminRoute
+import { toast } from "sonner";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

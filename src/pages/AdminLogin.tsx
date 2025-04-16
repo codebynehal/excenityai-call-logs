@@ -13,7 +13,7 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, isAdmin } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +33,9 @@ export default function AdminLogin() {
         throw new Error(error.message);
       }
       
-      // Successful login will be handled by App.tsx redirect
+      // Explicitly navigate to admin panel on successful login
       toast.success("Admin logged in successfully");
+      navigate("/admin");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {
