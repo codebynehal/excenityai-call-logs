@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Phone } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignUp() {
   const [name, setName] = useState("");
@@ -14,21 +15,36 @@ export default function SignUp() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signUp } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock signup functionality - would connect to API in real app
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error } = await signUp(email, password, name);
+      
+      if (error) {
+        toast({
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Account created successfully",
+          description: "Please check your email to verify your account",
+        });
+      }
+    } catch (err: any) {
       toast({
-        title: "Account created successfully",
-        description: "Welcome to CallGlow Dashboard"
+        title: "Sign up failed",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive"
       });
-      navigate("/calls");
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

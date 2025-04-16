@@ -1,8 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Phone, PhoneCall, User, X, PhoneIncoming, PhoneOutgoing } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
+  const { user } = useAuth();
   
   return (
     <div
@@ -89,11 +92,15 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
       <div className="border-t border-border p-4">
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
-            <span className="text-sm font-medium text-white">U</span>
+            <span className="text-sm font-medium text-white">
+              {user?.email?.charAt(0).toUpperCase() || 'U'}
+            </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-white">User</span>
-            <span className="text-xs text-muted-foreground">user@example.com</span>
+            <span className="text-sm font-medium text-white">
+              {user?.user_metadata?.first_name || 'User'}
+            </span>
+            <span className="text-xs text-muted-foreground">{user?.email || 'user@example.com'}</span>
           </div>
         </div>
       </div>

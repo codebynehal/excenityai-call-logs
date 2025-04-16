@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavbarProps {
   toggleSidebar?: () => void;
@@ -10,6 +11,11 @@ interface NavbarProps {
 
 export function Navbar({ toggleSidebar }: NavbarProps) {
   const isMobile = useIsMobile();
+  const { signOut } = useAuth();
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   return (
     <div className="sticky top-0 z-30 flex h-16 items-center border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -34,17 +40,15 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
           <Button
             variant="ghost"
             size={isMobile ? "icon" : "default"}
-            asChild
             className="text-white"
+            onClick={handleLogout}
           >
-            <Link to="/">
-              {isMobile ? <LogOut className="h-5 w-5" /> : (
-                <>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Logout
-                </>
-              )}
-            </Link>
+            {isMobile ? <LogOut className="h-5 w-5" /> : (
+              <>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </>
+            )}
           </Button>
         </div>
       </div>

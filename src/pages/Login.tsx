@@ -4,30 +4,46 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Phone } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signIn } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Mock login functionality - would connect to API in real app
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Logged in successfully",
+          description: "Welcome back to Excenity AI Dashboard"
+        });
+      }
+    } catch (err: any) {
       toast({
-        title: "Logged in successfully",
-        description: "Welcome back to CallGlow Dashboard"
+        title: "Login failed",
+        description: err.message || "An unexpected error occurred",
+        variant: "destructive"
       });
-      navigate("/calls");
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
