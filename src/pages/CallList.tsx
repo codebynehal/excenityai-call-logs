@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,8 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { 
   CallRecord, 
-  fetchCalls, 
-  getUserAllowedAssistantIds 
+  fetchCalls
 } from "@/services/vapiService";
 import CallListItem from "@/components/calls/CallListItem";
 import { Phone, PhoneCall, Clock, Filter, Calendar } from "lucide-react";
@@ -33,7 +31,6 @@ const CallList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState(callType || "all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
-  const [allowedAssistantIds, setAllowedAssistantIds] = useState<string[]>([]);
   const [assistantFilter, setAssistantFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -42,14 +39,9 @@ const CallList = () => {
     const loadCalls = async () => {
       setIsLoading(true);
       try {
-        const callsData = await fetchCalls();
+        // If admin, fetch all calls, otherwise fetch only user's calls
+        const callsData = await fetchCalls(isAdmin ? null : user?.email);
         setCalls(callsData);
-        
-        // Load allowed assistant IDs for the current user (if not admin)
-        if (user && !isAdmin && user.email) {
-          const assistantIds = await getUserAllowedAssistantIds(user.email);
-          setAllowedAssistantIds(assistantIds);
-        }
       } catch (error) {
         console.error("Failed to load calls:", error);
         toast.error("Failed to load calls. Please try again.");
@@ -61,7 +53,7 @@ const CallList = () => {
     loadCalls();
   }, [user, isAdmin]);
 
-  // Filter calls based on tab, permissions, assistantFilter, and search term
+  // Filter calls based on tab, assistantFilter, and search term
   useEffect(() => {
     let filtered = [...calls];
     
@@ -73,18 +65,6 @@ const CallList = () => {
     // Filter by assistant if selected
     if (assistantFilter !== "all") {
       filtered = filtered.filter(call => call.assistantId === assistantFilter);
-    }
-    
-    // If user is not admin, only show calls from allowed assistants
-    if (user && !isAdmin && allowedAssistantIds && Array.isArray(allowedAssistantIds)) {
-      if (allowedAssistantIds.length > 0) {
-        filtered = filtered.filter(call => 
-          allowedAssistantIds.includes(call.assistantId)
-        );
-      } else {
-        // If user has no allowed assistants, show no calls
-        filtered = [];
-      }
     }
     
     // Apply search filter if there's a search term
@@ -105,7 +85,7 @@ const CallList = () => {
     });
     
     setFilteredCalls(filtered);
-  }, [calls, tab, assistantFilter, sortBy, isAdmin, user, allowedAssistantIds, searchTerm]);
+  }, [calls, tab, assistantFilter, sortBy, searchTerm]);
 
   // Handle tab change
   const handleTabChange = (value: string) => {
