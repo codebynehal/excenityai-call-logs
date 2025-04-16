@@ -27,7 +27,7 @@ export default function AdminLogin() {
       }
       
       // Successful login will be handled by App.tsx redirect
-      toast.success("Logged in successfully");
+      toast.success("Admin logged in successfully");
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {
@@ -41,7 +41,7 @@ export default function AdminLogin() {
         <CardHeader>
           <CardTitle className="text-xl">Admin Login</CardTitle>
           <CardDescription>
-            Enter your credentials to access the admin panel
+            Enter your admin credentials
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -51,7 +51,7 @@ export default function AdminLogin() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="admin@excenityai.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
