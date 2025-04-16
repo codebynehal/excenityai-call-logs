@@ -23,94 +23,157 @@ export interface CallRecord {
 // Raw call data from the API
 export interface VapiCallData {
   id: string;
-  assistant_id: string;
-  server_kind: string;
-  phone_number_id: string;
-  from: string;
-  to: string;
-  direction: string;
+  assistantId: string;
+  phoneNumberId: string;
+  type: string;
+  startedAt: string;
+  endedAt: string | null;
+  transcript?: string;
+  recordingUrl?: string;
+  summary?: string;
+  createdAt: string;
+  updatedAt: string;
+  orgId: string;
+  cost: number;
+  customer: {
+    number: string;
+  };
   status: string;
-  duration: number;
-  started_at: string;
-  ended_at: string | null;
-  minutes_used: number;
+  endedReason: string;
   assistant: {
     id: string;
     name: string;
   };
-  recording_url?: string;
-  transcript?: {
-    role: string;
-    content: string;
-    timestamp: number;
-  }[];
-  summary?: string;
 }
 
 // Format the date for display
 const formatDate = (dateString: string): { date: string; time: string } => {
-  const date = new Date(dateString);
-  return {
-    date: date.toISOString().split('T')[0],
-    time: new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
-    }).format(date)
-  };
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date");
+    }
+    
+    return {
+      date: date.toISOString().split('T')[0],
+      time: new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      }).format(date)
+    };
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return {
+      date: "N/A",
+      time: "N/A"
+    };
+  }
 };
 
 // Format duration from seconds to MM:SS format
 const formatDuration = (seconds: number): string => {
-  if (seconds <= 0) return "0:00";
+  if (!seconds || seconds <= 0) return "0:00";
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-// Map the API response to our app's format
-const mapVapiCallToCallRecord = (vapiCall: VapiCallData): CallRecord => {
-  const { date, time } = formatDate(vapiCall.started_at);
+// Calculate call duration in seconds
+const calculateDuration = (startedAt: string, endedAt: string | null): number => {
+  if (!startedAt || !endedAt) return 0;
   
-  // Determine call type from direction
-  const callType = vapiCall.direction === "inbound" ? "inboundPhoneCall" : "outboundPhoneCall";
-  
-  // Determine end reason based on status
-  let endReason = "completed";
-  if (vapiCall.status === "no-answer") endReason = "missed";
-  else if (vapiCall.status === "busy") endReason = "busy";
-  else if (vapiCall.status === "failed") endReason = "failed";
-  
-  // Map transcript format if available
-  let transcript = undefined;
-  if (vapiCall.transcript && vapiCall.transcript.length > 0) {
-    const startTime = new Date(vapiCall.started_at).getTime();
+  try {
+    const start = new Date(startedAt).getTime();
+    const end = new Date(endedAt).getTime();
     
-    transcript = vapiCall.transcript.map(entry => {
-      // Calculate the timestamp in MM:SS format
-      const elapsedSeconds = (entry.timestamp - startTime) / 1000;
-      const minutes = Math.floor(elapsedSeconds / 60);
-      const seconds = Math.floor(elapsedSeconds % 60);
-      const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    if (isNaN(start) || isNaN(end)) return 0;
+    
+    return Math.max(0, (end - start) / 1000);
+  } catch (error) {
+    console.error("Error calculating duration:", error);
+    return 0;
+  }
+};
+
+// Process transcript string to structured format
+const processTranscript = (transcriptString: string | undefined, startTime: number): {
+  time: string;
+  speaker: string;
+  message: string;
+}[] | undefined => {
+  if (!transcriptString) return undefined;
+  
+  try {
+    const lines = transcriptString.split('\n').filter(line => line.trim());
+    return lines.map(line => {
+      // Simple parsing based on "AI:" or "User:" prefixes
+      const isSpeakerAI = line.startsWith('AI:');
+      const isSpeakerUser = line.startsWith('User:');
       
+      let speaker = "Unknown";
+      let message = line;
+      
+      if (isSpeakerAI) {
+        speaker = "AI";
+        message = line.substring(3).trim();
+      } else if (isSpeakerUser) {
+        speaker = "Customer";
+        message = line.substring(5).trim();
+      }
+      
+      // Use a placeholder timestamp since the API doesn't provide per-message timestamps
       return {
-        time: timeString,
-        speaker: entry.role === "assistant" ? "AI" : "Customer",
-        message: entry.content
+        time: "0:00", // Placeholder
+        speaker,
+        message
       };
     });
+  } catch (error) {
+    console.error("Error processing transcript:", error);
+    return undefined;
   }
+};
+
+// Map the API response to our app's format
+const mapVapiCallToCallRecord = (vapiCall: VapiCallData): CallRecord => {
+  // Use safe date formatting
+  const { date, time } = formatDate(vapiCall.startedAt);
+  
+  // Determine call type from direction (inbound/outbound)
+  // In the updated API, this is stored in the "type" field
+  const callType = vapiCall.type === "inboundPhoneCall" ? "inboundPhoneCall" : "outboundPhoneCall";
+  
+  // Calculate duration
+  const durationSeconds = calculateDuration(vapiCall.startedAt, vapiCall.endedAt);
+  
+  // Determine end reason based on status or endedReason
+  let endReason = "completed";
+  if (vapiCall.status === "no-answer" || vapiCall.endedReason === "no-answer") endReason = "missed";
+  else if (vapiCall.status === "busy" || vapiCall.endedReason === "busy") endReason = "busy";
+  else if (vapiCall.status === "failed" || vapiCall.endedReason === "failed") endReason = "failed";
+  else if (vapiCall.endedReason === "customer-ended-call") endReason = "completed";
+  
+  // Parse transcript if available
+  let transcript = undefined;
+  if (vapiCall.transcript) {
+    const startTime = new Date(vapiCall.startedAt).getTime();
+    transcript = processTranscript(vapiCall.transcript, startTime);
+  }
+  
+  // Determine the customer phone number
+  const customerPhone = vapiCall.customer?.number || "Unknown";
   
   return {
     id: vapiCall.id,
     callType,
-    customerPhone: callType === "inboundPhoneCall" ? vapiCall.from : vapiCall.to,
-    agentName: vapiCall.assistant.name,
+    customerPhone,
+    agentName: vapiCall.assistant?.name || "Unknown",
     date,
     time,
-    duration: formatDuration(vapiCall.duration || 0),
+    duration: formatDuration(durationSeconds),
     endReason,
-    recordingUrl: vapiCall.recording_url,
+    recordingUrl: vapiCall.recordingUrl,
     summary: vapiCall.summary,
     transcript
   };
@@ -132,7 +195,11 @@ export const fetchCalls = async (): Promise<CallRecord[]> => {
     }
     
     const data: VapiCallData[] = await response.json();
-    return data.map(mapVapiCallToCallRecord);
+    console.log("API response data:", data); // Debug log
+    
+    return data
+      .filter(call => call && call.id) // Filter out any null or invalid calls
+      .map(mapVapiCallToCallRecord);
   } catch (error) {
     console.error("Failed to fetch calls:", error);
     toast.error("Failed to load calls. Please try again later.");
@@ -157,6 +224,8 @@ export const fetchCallById = async (callId: string): Promise<CallRecord | null> 
     }
     
     const data: VapiCallData = await response.json();
+    console.log("Call detail response:", data); // Debug log
+    
     return mapVapiCallToCallRecord(data);
   } catch (error) {
     console.error(`Failed to fetch call ${callId}:`, error);
