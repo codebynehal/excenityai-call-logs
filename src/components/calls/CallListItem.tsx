@@ -34,7 +34,7 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
         </div>
         <div>
           <h3 className="font-medium">
-            {call.caller || call.recipient || "Unknown"}
+            {isInbound ? call.customerPhone : call.assistantPhone}
           </h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant={isInbound ? "default" : "secondary"} className="capitalize">
@@ -62,7 +62,11 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
         {call.transcript && (
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <MessageSquare className="h-3 w-3" />
-            <span>{call.transcript.substring(0, 30)}...</span>
+            <span>
+              {typeof call.transcript === 'string' 
+                ? call.transcript.substring(0, 30) + "..." 
+                : call.transcript[0]?.message.substring(0, 30) + "..."}
+            </span>
           </div>
         )}
       </div>
