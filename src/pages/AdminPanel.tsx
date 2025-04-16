@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { X, Plus, Search, Users } from "lucide-react";
+import { X, Plus, Search, Users, LogOut } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,7 +18,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut } from "lucide-react";
 
 export default function AdminPanel() {
   const { isAdmin, signOut } = useAuth();
@@ -59,27 +58,14 @@ export default function AdminPanel() {
       setIsLoading(true);
       try {
         const { data, error } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name')
-          .order('created_at', { ascending: false });
+          .rpc('get_user_emails_for_admin');
         
         if (error) {
           throw error;
         }
         
-        const userIds = data.map(profile => profile.id);
-        const userEmailsMap: Record<string, string> = {};
-        
-        for (const userId of userIds) {
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
-          if (!userError && userData?.user && userData.user.email) {
-            if (!userData.user.email.endsWith('@excenityai.com')) {
-              userEmailsMap[userId] = userData.user.email;
-            }
-          }
-        }
-        
-        setUserEmails(Object.values(userEmailsMap));
+        const emails = data.map(user => user.email);
+        setUserEmails(emails);
       } catch (error: any) {
         console.error("Error fetching users:", error);
         toast.error("Failed to load users: " + (error.message || "Unknown error"));
