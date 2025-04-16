@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import { CallRecord, VapiCallData, VapiAssistantData } from "../types/callTypes";
 import { mapVapiCallToCallRecord } from "../utils/callUtils";
@@ -114,6 +115,7 @@ const fetchCallsForAssistant = async (assistantId: string): Promise<CallRecord[]
   }
 };
 
+// Main function to fetch all calls
 export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[]> => {
   try {
     // Get user's assistant IDs if email is provided

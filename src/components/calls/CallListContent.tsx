@@ -12,7 +12,8 @@ import {
   PaginationItem, 
   PaginationLink, 
   PaginationNext, 
-  PaginationPrevious
+  PaginationPrevious,
+  PaginationEllipsis
 } from "@/components/ui/pagination";
 
 interface CallListContentProps {
@@ -141,7 +142,7 @@ const CallListContent = ({
             {getPageNumbers().map((page, i) => (
               <PaginationItem key={`page-${page}-${i}`}>
                 {page < 0 ? (
-                  <span className="flex h-9 w-9 items-center justify-center">...</span>
+                  <PaginationEllipsis />
                 ) : (
                   <PaginationLink
                     isActive={page === currentPage}

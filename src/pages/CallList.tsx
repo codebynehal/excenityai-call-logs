@@ -71,11 +71,15 @@ const CallList = () => {
     setFilteredCalls(filtered);
     
     // Reset to first page when filters change
-    setCurrentPage(1);
-    
-    // Update URL without page parameter when filters change
-    setSearchParams({});
-  }, [calls, tab, assistantFilter, sortBy, searchTerm, setSearchParams]);
+    if (searchTerm || assistantFilter !== "all" || sortBy) {
+      setCurrentPage(1);
+      // Update URL without page parameter when filters change
+      if (searchParams.has('page')) {
+        searchParams.delete('page');
+        setSearchParams(searchParams);
+      }
+    }
+  }, [calls, tab, assistantFilter, sortBy, searchTerm]);
 
   // Handle pagination
   useEffect(() => {
@@ -85,20 +89,31 @@ const CallList = () => {
     
     // Update URL with current page
     if (currentPage > 1) {
-      setSearchParams({ page: currentPage.toString() });
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.set('page', currentPage.toString());
+        return newParams;
+      });
     } else {
       // Remove page parameter if on first page
-      if (searchParams.has('page')) {
-        searchParams.delete('page');
-        setSearchParams(searchParams);
-      }
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        if (newParams.has('page')) {
+          newParams.delete('page');
+        }
+        return newParams;
+      });
     }
-  }, [currentPage, pageSize, filteredCalls, searchParams, setSearchParams]);
+    
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage, pageSize, filteredCalls, setSearchParams]);
 
   // Handle page change
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (page !== currentPage) {
+      setCurrentPage(page);
+    }
   };
 
   // Handle tab change
@@ -182,7 +197,7 @@ const CallList = () => {
         <CallTabs 
           tab={tab}
           onTabChange={handleTabChange}
-          calls={calls}
+          calls={filteredCalls}
           filteredCalls={paginatedCalls}
           isLoading={isLoading}
           onCallClick={(callId) => navigate(`/calls/details/${callId}`)}
