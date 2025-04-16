@@ -11,13 +11,6 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getUserAssistantMappings, addUserAssistantMapping, removeUserAssistantMapping, UserAssistantMapping } from "@/services/vapiService";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminPanel() {
@@ -58,79 +51,27 @@ export default function AdminPanel() {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        // Fetch profiles and join with auth.users to get emails
-        // Use the proper join query that works with Supabase
-        const { data: authUsers, error: authError } = await supabase
-          .from('auth.users')
-          .select('id, email')
-          .not('email', 'ilike', '%@excenityai.com');
+        // Simplify the user fetching - just get existing mappings
+        const { data: mappingsData, error: mappingsError } = await supabase
+          .from('user_assistant_mappings')
+          .select('user_email')
+          .order('user_email');
 
-        if (authError) {
-          throw authError;
-        }
-
-        if (authUsers && authUsers.length > 0) {
-          const emails = authUsers.map(user => user.email);
-          setUserEmails(emails);
-          console.log("Fetched emails from auth.users:", emails);
+        if (mappingsError) throw mappingsError;
+        
+        const mappingEmails = [...new Set(mappingsData.map(item => item.user_email))];
+        
+        if (mappingEmails.length > 0) {
+          setUserEmails(mappingEmails);
+          console.log("Using mapping emails:", mappingEmails);
         } else {
-          // Alternative approach: get emails from the profiles table
-          // This assumes profiles have the same ID as users and we can match them
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id');
-            
-          if (profilesError) throw profilesError;
-
-          if (profilesData && profilesData.length > 0) {
-            // Now fetch emails from auth.users for these profiles
-            const profileIds = profilesData.map(profile => profile.id);
-            
-            const { data: usersData, error: usersError } = await supabase
-              .auth.admin.listUsers();
-              
-            if (usersError) throw usersError;
-            
-            // Filter users by profile IDs and exclude Excenity emails
-            const matchedUsers = usersData.users.filter(
-              user => profileIds.includes(user.id) && 
-                     !user.email.includes('@excenityai.com')
-            );
-            
-            const emails = matchedUsers.map(user => user.email);
-            setUserEmails(emails);
-            console.log("Fetched emails via profiles matching:", emails);
-          } else {
-            // Final fallback: use existing mappings
-            const { data: mappingsData, error: mappingsError } = await supabase
-              .from('user_assistant_mappings')
-              .select('user_email')
-              .order('user_email');
-
-            if (mappingsError) throw mappingsError;
-            
-            const mappingEmails = [...new Set(mappingsData.map(item => item.user_email))];
-            
-            if (mappingEmails.length > 0) {
-              setUserEmails(mappingEmails);
-              console.log("Using mapping emails as fallback:", mappingEmails);
-            } else {
-              setUserEmails(['user@example.com']);
-              console.log("Using placeholder email");
-            }
-          }
+          setUserEmails([]);
+          console.log("No existing user emails found");
         }
       } catch (error: any) {
         console.error("Error fetching users:", error);
         toast.error("Failed to load users: " + (error.message || "Unknown error"));
-        
-        // Last resort fallback
-        const existingEmails = userMappings.map(mapping => mapping.userEmail);
-        if (existingEmails.length > 0) {
-          setUserEmails([...new Set(existingEmails)]);
-        } else {
-          setUserEmails(['user@example.com']);
-        }
+        setUserEmails([]);
       } finally {
         setIsLoading(false);
       }
@@ -143,7 +84,7 @@ export default function AdminPanel() {
 
   const handleAddMapping = async () => {
     if (!selectedUserEmail || !newAssistantId) {
-      toast.error("Please select a user and enter an assistant ID");
+      toast.error("Please enter a user email and an assistant ID");
       return;
     }
 
@@ -223,24 +164,18 @@ export default function AdminPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="userEmail">User Email</Label>
-                <Select value={selectedUserEmail} onValueChange={setSelectedUserEmail}>
-                  <SelectTrigger id="userEmail" className="w-full">
-                    <SelectValue placeholder="Select a user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoading ? (
-                      <div className="p-2 text-center text-sm text-muted-foreground">Loading users...</div>
-                    ) : userEmails.length === 0 ? (
-                      <div className="p-2 text-center text-sm text-muted-foreground">No users found</div>
-                    ) : (
-                      userEmails.map(email => (
-                        <SelectItem key={email} value={email}>
-                          {email}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="userEmail"
+                  placeholder="user@example.com"
+                  value={selectedUserEmail}
+                  onChange={(e) => setSelectedUserEmail(e.target.value)}
+                  list="user-emails"
+                />
+                <datalist id="user-emails">
+                  {userEmails.map(email => (
+                    <option key={email} value={email} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assistantId">Assistant ID</Label>
