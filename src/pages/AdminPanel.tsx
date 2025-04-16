@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +18,10 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { LogOut } from "lucide-react";
 
 export default function AdminPanel() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [userMappings, setUserMappings] = useState<UserAssistantMapping[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,14 +31,12 @@ export default function AdminPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Redirect if not admin
   useEffect(() => {
     if (!isAdmin) {
       navigate("/calls");
     }
   }, [isAdmin, navigate]);
 
-  // Load user mappings
   useEffect(() => {
     const loadMappings = async () => {
       setIsLoading(true);
@@ -56,13 +54,10 @@ export default function AdminPanel() {
     loadMappings();
   }, []);
 
-  // Fetch users - using a different approach
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        // Instead of using the admin API which requires additional permissions,
-        // we'll query for user profiles from our public schema
         const { data, error } = await supabase
           .from('profiles')
           .select('id, first_name, last_name')
@@ -72,14 +67,12 @@ export default function AdminPanel() {
           throw error;
         }
         
-        // Now get the emails for these users (admin must be able to see this)
         const userIds = data.map(profile => profile.id);
         const userEmailsMap: Record<string, string> = {};
         
         for (const userId of userIds) {
           const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
           if (!userError && userData?.user && userData.user.email) {
-            // Only add non-admin emails
             if (!userData.user.email.endsWith('@excenityai.com')) {
               userEmailsMap[userId] = userData.user.email;
             }
@@ -91,7 +84,6 @@ export default function AdminPanel() {
         console.error("Error fetching users:", error);
         toast.error("Failed to load users: " + (error.message || "Unknown error"));
         
-        // Fallback approach - just use the mappings we have
         const existingEmails = userMappings.map(mapping => mapping.userEmail);
         if (existingEmails.length > 0) {
           setUserEmails(existingEmails);
@@ -116,7 +108,6 @@ export default function AdminPanel() {
     try {
       const success = await addUserAssistantMapping(selectedUserEmail, newAssistantId);
       if (success) {
-        // Reload mappings
         const mappings = await getUserAssistantMappings();
         setUserMappings(mappings);
         toast.success(`Assistant added for ${selectedUserEmail}`);
@@ -135,7 +126,6 @@ export default function AdminPanel() {
     try {
       const success = await removeUserAssistantMapping(userEmail, assistantId);
       if (success) {
-        // Reload mappings
         const mappings = await getUserAssistantMappings();
         setUserMappings(mappings);
         toast.success("Mapping removed successfully");
@@ -148,7 +138,6 @@ export default function AdminPanel() {
     }
   };
 
-  // Filter mappings based on search term
   const filteredMappings = userMappings.filter(mapping => 
     mapping.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
     mapping.assistantIds.some(id => id.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -157,14 +146,24 @@ export default function AdminPanel() {
   return (
     <div className="container py-8 max-w-4xl">
       <Card>
-        <CardHeader>
-          <CardTitle>Admin Panel</CardTitle>
-          <CardDescription>
-            Manage user access to assistants
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Admin Panel</CardTitle>
+            <CardDescription>
+              Manage user access to assistants
+            </CardDescription>
+          </div>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={signOut}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -176,7 +175,6 @@ export default function AdminPanel() {
             />
           </div>
 
-          {/* Add new mapping */}
           <div className="bg-muted/50 p-4 rounded-lg space-y-4">
             <h3 className="text-sm font-medium">Add New Assistant Access</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -228,7 +226,6 @@ export default function AdminPanel() {
 
           <Separator />
 
-          {/* User mappings list */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">User Access Mappings</h3>
