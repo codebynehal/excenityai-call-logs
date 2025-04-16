@@ -16,8 +16,8 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// List of admin emails - in a real app this would be stored in the database
-const ADMIN_EMAILS = ['admin@example.com'];
+// Update the admin emails list with the specific admin email
+const ADMIN_EMAILS = ['admin@excenityai.com'];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
