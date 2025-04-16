@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { CallRecord, VapiCallData, VapiAssistantData } from "../types/callTypes";
 import { mapVapiCallToCallRecord } from "../utils/callUtils";
@@ -67,32 +66,11 @@ export const fetchAssistantDetails = async (assistantId: string): Promise<VapiAs
   }
 };
 
-export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[]> => {
+// Fetch calls for a single assistant ID
+const fetchCallsForAssistant = async (assistantId: string): Promise<CallRecord[]> => {
   try {
-    // Get user's assistant IDs if email is provided
-    let assistantIds: string[] = [];
-    let queryParams = '';
-    
-    if (userEmail) {
-      assistantIds = await getUserAssistantIds(userEmail);
-      console.log("User's allowed assistant IDs:", assistantIds);
-      
-      // If user has no assigned assistants, return empty array
-      if (assistantIds.length === 0) {
-        console.log("User has no assigned assistants, returning empty call list");
-        return [];
-      }
-      
-      // Construct query parameters for filtering by assistant IDs
-      queryParams = assistantIds.map(id => `assistantId=${id}`).join('&');
-      if (queryParams) {
-        queryParams = '?' + queryParams;
-      }
-    }
-    
-    // Make API call with assistant ID filter if available
-    const url = `https://api.vapi.ai/call${queryParams}`;
-    console.log("Fetching calls with URL:", url);
+    console.log(`Fetching calls for assistant ID: ${assistantId}`);
+    const url = `https://api.vapi.ai/call?assistantId=${assistantId}`;
     
     const response = await fetch(url, {
       headers: {
@@ -101,41 +79,24 @@ export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[
     });
     
     if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
+      throw new Error(`API request failed with status ${response.status} for assistant ${assistantId}`);
     }
     
     const data: VapiCallData[] = await response.json();
-    console.log("API response data:", data); // Debug log
+    console.log(`Retrieved ${data.length} calls for assistant ${assistantId}`);
     
-    // If assistantIds is not empty, double-check filtering on client side
-    // (this is a safety check in case the API filtering doesn't work as expected)
-    let filteredData = data;
-    if (assistantIds.length > 0) {
-      filteredData = data.filter(call => 
-        assistantIds.includes(call.assistantId)
-      );
+    // Fetch assistant details if not already cached
+    if (!assistantDetailsCache[assistantId]) {
+      await fetchAssistantDetails(assistantId);
     }
     
-    // Pre-fetch all unique assistant details to avoid multiple API calls
-    const uniqueAssistantIds = [...new Set(filteredData.map(call => call.assistantId))];
-    console.log("Unique assistant IDs:", uniqueAssistantIds);
-    
-    // Fetch all assistant details in parallel and store in cache
-    await Promise.all(
-      uniqueAssistantIds.map(async (assistantId) => {
-        if (!assistantDetailsCache[assistantId]) {
-          await fetchAssistantDetails(assistantId);
-        }
-      })
-    );
-    
     // Process calls with cached assistant details
-    const enrichedCalls = filteredData
+    return data
       .filter(call => call && call.id) // Filter out any null or invalid calls
       .map(call => {
         // If the call doesn't already have assistant name/details
         if (!call.assistant?.name && call.assistantId) {
-          const assistantDetails = assistantDetailsCache[call.assistantId];
+          const assistantDetails = assistantDetailsCache[assistantId];
           if (assistantDetails) {
             // Enrich the call data with assistant details
             call.assistant = {
@@ -147,8 +108,89 @@ export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[
         }
         return mapVapiCallToCallRecord(call);
       });
+  } catch (error) {
+    console.error(`Failed to fetch calls for assistant ${assistantId}:`, error);
+    return [];
+  }
+};
+
+export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[]> => {
+  try {
+    // Get user's assistant IDs if email is provided
+    let assistantIds: string[] = [];
     
-    return enrichedCalls;
+    if (userEmail) {
+      assistantIds = await getUserAssistantIds(userEmail);
+      console.log("User's allowed assistant IDs:", assistantIds);
+      
+      // If user has no assigned assistants, return empty array
+      if (assistantIds.length === 0) {
+        console.log("User has no assigned assistants, returning empty call list");
+        return [];
+      }
+    } else {
+      // For admin, fetch all calls in one request
+      console.log("Admin request, fetching all calls");
+      const response = await fetch("https://api.vapi.ai/call", {
+        headers: {
+          "Authorization": `Bearer ${VAPI_API_KEY}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      
+      const data: VapiCallData[] = await response.json();
+      console.log(`Admin: Retrieved ${data.length} total calls`);
+      
+      // Pre-fetch all unique assistant details
+      const uniqueAssistantIds = [...new Set(data.map(call => call.assistantId))];
+      await Promise.all(
+        uniqueAssistantIds.map(async (id) => {
+          if (id && !assistantDetailsCache[id]) {
+            await fetchAssistantDetails(id);
+          }
+        })
+      );
+      
+      // Process all calls with cached assistant details
+      return data
+        .filter(call => call && call.id)
+        .map(call => {
+          if (!call.assistant?.name && call.assistantId) {
+            const assistantDetails = assistantDetailsCache[call.assistantId];
+            if (assistantDetails) {
+              call.assistant = {
+                ...call.assistant,
+                id: call.assistantId,
+                name: assistantDetails.name || "Unnamed Assistant"
+              };
+            }
+          }
+          return mapVapiCallToCallRecord(call);
+        });
+    }
+    
+    // For regular users, fetch calls for each assistant ID individually
+    const allCalls: CallRecord[] = [];
+    
+    // Process assistant IDs sequentially to avoid rate limiting
+    for (const assistantId of assistantIds) {
+      const calls = await fetchCallsForAssistant(assistantId);
+      allCalls.push(...calls);
+    }
+    
+    console.log(`Total calls retrieved across all assistants: ${allCalls.length}`);
+    
+    // Sort all calls by date (newest first)
+    allCalls.sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time}`).getTime();
+      const dateB = new Date(`${b.date} ${b.time}`).getTime();
+      return dateB - dateA;
+    });
+    
+    return allCalls;
   } catch (error) {
     console.error("Failed to fetch calls:", error);
     toast.error("Failed to load calls. Please try again later.");
