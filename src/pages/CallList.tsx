@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { CallRecord, fetchCalls } from "@/services/vapiService";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,7 +10,13 @@ import CallTabs from "@/components/calls/CallTabs";
 const CallList = () => {
   const { callType } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, isAdmin } = useAuth();
+  
+  // Get page from URL or default to 1
+  const pageFromUrl = searchParams.get("page");
+  const initialPage = pageFromUrl ? parseInt(pageFromUrl, 10) : 1;
+  
   const [calls, setCalls] = useState<CallRecord[]>([]);
   const [filteredCalls, setFilteredCalls] = useState<CallRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,6 +24,11 @@ const CallList = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [assistantFilter, setAssistantFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(initialPage);
+  const [pageSize] = useState(10);
+  const [paginatedCalls, setPaginatedCalls] = useState<CallRecord[]>([]);
 
   // Load calls
   useEffect(() => {
@@ -70,7 +81,37 @@ const CallList = () => {
     });
     
     setFilteredCalls(filtered);
-  }, [calls, tab, assistantFilter, sortBy, searchTerm]);
+    
+    // Reset to first page when filters change
+    setCurrentPage(1);
+    
+    // Update URL without page parameter when filters change
+    setSearchParams({});
+  }, [calls, tab, assistantFilter, sortBy, searchTerm, setSearchParams]);
+
+  // Handle pagination
+  useEffect(() => {
+    const start = (currentPage - 1) * pageSize;
+    const paginatedItems = filteredCalls.slice(start, start + pageSize);
+    setPaginatedCalls(paginatedItems);
+    
+    // Update URL with current page
+    if (currentPage > 1) {
+      setSearchParams({ page: currentPage.toString() });
+    } else {
+      // Remove page parameter if on first page
+      if (searchParams.has('page')) {
+        searchParams.delete('page');
+        setSearchParams(searchParams);
+      }
+    }
+  }, [currentPage, pageSize, filteredCalls, searchParams, setSearchParams]);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Handle tab change
   const handleTabChange = (value: string) => {
@@ -89,6 +130,9 @@ const CallList = () => {
     }
     return acc;
   }, []);
+  
+  // Calculate total pages
+  const totalPages = Math.max(1, Math.ceil(filteredCalls.length / pageSize));
 
   return (
     <div className="container py-6 max-w-5xl">
@@ -110,9 +154,13 @@ const CallList = () => {
           tab={tab}
           onTabChange={handleTabChange}
           calls={calls}
-          filteredCalls={filteredCalls}
+          filteredCalls={paginatedCalls}
           isLoading={isLoading}
           onCallClick={(callId) => navigate(`/calls/details/${callId}`)}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          pageSize={pageSize}
         />
       </div>
     </div>

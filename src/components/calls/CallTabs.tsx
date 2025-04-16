@@ -3,6 +3,7 @@ import React from "react";
 import { Phone, PhoneCall, Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CallRecord } from "@/services/vapiService";
+import CallListContent from "./CallListContent";
 
 interface CallTabsProps {
   tab: string;
@@ -11,6 +12,10 @@ interface CallTabsProps {
   filteredCalls: CallRecord[];
   isLoading: boolean;
   onCallClick: (callId: string) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  pageSize: number;
 }
 
 const CallTabs = ({ 
@@ -19,13 +24,14 @@ const CallTabs = ({
   calls, 
   filteredCalls, 
   isLoading, 
-  onCallClick 
+  onCallClick,
+  currentPage,
+  totalPages,
+  onPageChange,
+  pageSize
 }: CallTabsProps) => {
   const inboundCallCount = calls.filter(c => c.callType === "inboundPhoneCall").length;
   const outboundCallCount = calls.filter(c => c.callType === "outboundPhoneCall").length;
-
-  // Import needed to prevent circular dependency
-  const CallListContent = React.lazy(() => import("./CallListContent"));
 
   return (
     <Tabs defaultValue={tab} value={tab} onValueChange={onTabChange}>
@@ -45,36 +51,42 @@ const CallTabs = ({
       </TabsList>
       
       <TabsContent value="all" className="mt-0">
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <CallListContent 
-            calls={filteredCalls} 
-            isLoading={isLoading} 
-            count={calls.length}
-            onCallClick={onCallClick}
-          />
-        </React.Suspense>
+        <CallListContent 
+          calls={filteredCalls} 
+          isLoading={isLoading} 
+          count={calls.length}
+          onCallClick={onCallClick}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          pageSize={pageSize}
+        />
       </TabsContent>
       
       <TabsContent value="inboundPhoneCall" className="mt-0">
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <CallListContent 
-            calls={filteredCalls} 
-            isLoading={isLoading} 
-            count={inboundCallCount}
-            onCallClick={onCallClick}
-          />
-        </React.Suspense>
+        <CallListContent 
+          calls={filteredCalls} 
+          isLoading={isLoading} 
+          count={inboundCallCount}
+          onCallClick={onCallClick}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          pageSize={pageSize}
+        />
       </TabsContent>
       
       <TabsContent value="outboundPhoneCall" className="mt-0">
-        <React.Suspense fallback={<div>Loading...</div>}>
-          <CallListContent 
-            calls={filteredCalls} 
-            isLoading={isLoading} 
-            count={outboundCallCount}
-            onCallClick={onCallClick}
-          />
-        </React.Suspense>
+        <CallListContent 
+          calls={filteredCalls} 
+          isLoading={isLoading} 
+          count={outboundCallCount}
+          onCallClick={onCallClick}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          pageSize={pageSize}
+        />
       </TabsContent>
     </Tabs>
   );
