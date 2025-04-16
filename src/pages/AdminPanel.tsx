@@ -5,20 +5,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { X, Plus, Search } from "lucide-react";
+import { X, Plus, Search, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { getUserAssistantMappings, addUserAssistantMapping, removeUserAssistantMapping, UserAssistantMapping } from "@/services/vapiService";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AdminPanel() {
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [userMappings, setUserMappings] = useState<UserAssistantMapping[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
+  const [selectedUserEmail, setSelectedUserEmail] = useState("");
   const [newAssistantId, setNewAssistantId] = useState("");
+  const [userEmails, setUserEmails] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -32,22 +42,46 @@ export default function AdminPanel() {
     setUserMappings(getUserAssistantMappings());
   }, []);
 
-  const handleAddMapping = () => {
-    if (!newUserEmail || !newAssistantId) {
-      toast.error("Please enter both email and assistant ID");
-      return;
-    }
+  // Fetch all users from Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.admin.listUsers();
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data?.users) {
+          const emails = data.users
+            .filter(user => user.email && !user.email.endsWith('@excenityai.com'))
+            .map(user => user.email as string);
+          setUserEmails(emails);
+        }
+      } catch (error: any) {
+        console.error("Error fetching users:", error);
+        toast.error("Failed to load users: " + (error.message || "Unknown error"));
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    // Basic email validation
-    if (!/^\S+@\S+\.\S+$/.test(newUserEmail)) {
-      toast.error("Please enter a valid email address");
+    if (isAdmin) {
+      fetchUsers();
+    }
+  }, [isAdmin]);
+
+  const handleAddMapping = () => {
+    if (!selectedUserEmail || !newAssistantId) {
+      toast.error("Please select a user and enter an assistant ID");
       return;
     }
 
     try {
-      addUserAssistantMapping(newUserEmail, newAssistantId);
+      addUserAssistantMapping(selectedUserEmail, newAssistantId);
       setUserMappings(getUserAssistantMappings());
-      toast.success(`Assistant added for ${newUserEmail}`);
+      toast.success(`Assistant added for ${selectedUserEmail}`);
       setNewAssistantId("");
     } catch (error) {
       toast.error("Failed to add mapping");
@@ -98,13 +132,24 @@ export default function AdminPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="userEmail">User Email</Label>
-                <Input
-                  id="userEmail"
-                  type="email"
-                  placeholder="user@example.com"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                />
+                <Select value={selectedUserEmail} onValueChange={setSelectedUserEmail}>
+                  <SelectTrigger id="userEmail" className="w-full">
+                    <SelectValue placeholder="Select a user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {isLoading ? (
+                      <div className="p-2 text-center text-sm text-muted-foreground">Loading users...</div>
+                    ) : userEmails.length === 0 ? (
+                      <div className="p-2 text-center text-sm text-muted-foreground">No users found</div>
+                    ) : (
+                      userEmails.map(email => (
+                        <SelectItem key={email} value={email}>
+                          {email}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assistantId">Assistant ID</Label>
@@ -126,7 +171,13 @@ export default function AdminPanel() {
 
           {/* User mappings list */}
           <div className="space-y-4">
-            <h3 className="text-sm font-medium">User Access Mappings</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium">User Access Mappings</h3>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                {userEmails.length} users
+              </Badge>
+            </div>
             
             {filteredMappings.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
