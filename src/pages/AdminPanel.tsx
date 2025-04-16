@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,40 +57,29 @@ export default function AdminPanel() {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        // Alternative approach: fetch user emails directly from user_assistant_mappings
-        // to avoid the type mismatch error
-        const { data: mappingsData, error: mappingsError } = await supabase
-          .from('user_assistant_mappings')
-          .select('user_email')
-          .order('user_email');
-
-        if (mappingsError) {
-          throw mappingsError;
-        }
-
-        // Extract unique emails
-        const emails = [...new Set(mappingsData.map(item => item.user_email))];
+        const { data, error } = await supabase
+          .rpc('get_user_emails_for_admin');
         
-        if (emails.length > 0) {
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          const emails = data.map((user: { email: string }) => user.email);
           setUserEmails(emails);
         } else {
-          // Fallback if no mappings exist yet
-          try {
-            // Query profiles and manually filter admin emails
-            const { data: profiles, error: profilesError } = await supabase
-              .from('profiles')
-              .select('id');
-              
-            if (profilesError) throw profilesError;
-            
-            // For demonstration only - would need admin access to auth.users
-            // Just set a mock email for initial testing if no real emails available
-            if (!emails.length) {
-              setUserEmails(['user@example.com']);
-            }
-          } catch (fallbackError) {
-            console.error("Fallback error:", fallbackError);
-            // Provide at least one placeholder for testing
+          const { data: mappingsData, error: mappingsError } = await supabase
+            .from('user_assistant_mappings')
+            .select('user_email')
+            .order('user_email');
+
+          if (mappingsError) throw mappingsError;
+          
+          const mappingEmails = [...new Set(mappingsData.map(item => item.user_email))];
+          
+          if (mappingEmails.length > 0) {
+            setUserEmails(mappingEmails);
+          } else {
             setUserEmails(['user@example.com']);
           }
         }
@@ -103,7 +91,6 @@ export default function AdminPanel() {
         if (existingEmails.length > 0) {
           setUserEmails(existingEmails);
         } else {
-          // Always have at least one entry for testing
           setUserEmails(['user@example.com']);
         }
       } finally {
