@@ -17,6 +17,13 @@ export default function AdminLogin() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Verify email is admin format
+    if (!email.endsWith('@excenityai.com')) {
+      toast.error("Admin email must end with @excenityai.com");
+      return;
+    }
+    
     setIsLoading(true);
     
     try {

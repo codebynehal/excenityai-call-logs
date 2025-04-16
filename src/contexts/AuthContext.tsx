@@ -16,15 +16,18 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Update the admin emails list with the specific admin email
-const ADMIN_EMAILS = ['admin@excenityai.com'];
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+
+  // Function to check if a user is an admin based on their email
+  const checkIsAdmin = (email: string | null) => {
+    if (!email) return false;
+    return email.endsWith('@excenityai.com');
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -33,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         // Check if current user is an admin
-        setIsAdmin(session?.user ? ADMIN_EMAILS.includes(session.user.email || '') : false);
+        setIsAdmin(session?.user ? checkIsAdmin(session.user.email) : false);
       }
     );
 
@@ -42,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       // Check if current user is an admin
-      setIsAdmin(session?.user ? ADMIN_EMAILS.includes(session.user.email || '') : false);
+      setIsAdmin(session?.user ? checkIsAdmin(session.user.email) : false);
       setLoading(false);
     });
 
