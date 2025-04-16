@@ -42,26 +42,46 @@ export default function AdminPanel() {
     setUserMappings(getUserAssistantMappings());
   }, []);
 
-  // Fetch all users from Supabase
+  // Fetch users - using a different approach
   useEffect(() => {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase.auth.admin.listUsers();
+        // Instead of using the admin API which requires additional permissions,
+        // we'll query for user profiles from our public schema
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name')
+          .order('created_at', { ascending: false });
         
         if (error) {
           throw error;
         }
         
-        if (data?.users) {
-          const emails = data.users
-            .filter(user => user.email && !user.email.endsWith('@excenityai.com'))
-            .map(user => user.email as string);
-          setUserEmails(emails);
+        // Now get the emails for these users (admin must be able to see this)
+        const userIds = data.map(profile => profile.id);
+        const userEmailsMap: Record<string, string> = {};
+        
+        for (const userId of userIds) {
+          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(userId);
+          if (!userError && userData?.user && userData.user.email) {
+            // Only add non-admin emails
+            if (!userData.user.email.endsWith('@excenityai.com')) {
+              userEmailsMap[userId] = userData.user.email;
+            }
+          }
         }
+        
+        setUserEmails(Object.values(userEmailsMap));
       } catch (error: any) {
         console.error("Error fetching users:", error);
         toast.error("Failed to load users: " + (error.message || "Unknown error"));
+        
+        // Fallback approach - just use the mappings we have
+        const existingEmails = userMappings.map(mapping => mapping.userEmail);
+        if (existingEmails.length > 0) {
+          setUserEmails(existingEmails);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +90,7 @@ export default function AdminPanel() {
     if (isAdmin) {
       fetchUsers();
     }
-  }, [isAdmin]);
+  }, [isAdmin, userMappings]);
 
   const handleAddMapping = () => {
     if (!selectedUserEmail || !newAssistantId) {
