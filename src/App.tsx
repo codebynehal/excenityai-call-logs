@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import AdminLogin from "./pages/AdminLogin";
+import AdminSignUp from "./pages/AdminSignUp";
 import AdminPanel from "./pages/AdminPanel";
 import { MainLayout } from "./components/layout/MainLayout";
 import CallList from "./pages/CallList";
@@ -71,6 +72,7 @@ const AppRoutes = () => (
     <Route path="/" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
     <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
     <Route path="/admin-login" element={<AdminLogin />} />
+    <Route path="/admin-signup" element={<AdminSignUp />} />
     
     <Route element={<ProtectedRoute />}>
       <Route element={<MainLayout />}>

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,7 +68,7 @@ export default function AdminLogin() {
               />
             </div>
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex-col space-y-4">
             <Button 
               type="submit" 
               className="w-full" 
@@ -76,6 +76,12 @@ export default function AdminLogin() {
             >
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
+            <p className="text-center text-sm">
+              Need an admin account?{" "}
+              <Link to="/admin-signup" className="font-medium text-blue-500 hover:text-blue-400">
+                Register here
+              </Link>
+            </p>
           </CardFooter>
         </form>
       </Card>
