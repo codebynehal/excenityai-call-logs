@@ -25,7 +25,7 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
               <Phone className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-white">
-              CallGlow
+              Excenity AI
             </span>
           </Link>
         </div>

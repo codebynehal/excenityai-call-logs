@@ -39,10 +39,10 @@ export default function SignUp() {
             <Phone className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-white">
-            CallGlow
+            Excenity AI
           </h1>
           <p className="text-muted-foreground mt-2">
-            Call Monitoring Dashboard
+            AI-Powered Call Monitoring Dashboard
           </p>
         </div>
 

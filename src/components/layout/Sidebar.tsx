@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -25,7 +24,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           <div className="orange-gradient rounded-full p-1.5">
             <Phone className="h-5 w-5 text-white" />
           </div>
-          <span className="text-xl font-bold text-white">CallGlow</span>
+          <span className="text-xl font-bold text-white">Excenity AI</span>
         </Link>
         <Button
           onClick={() => setIsOpen(false)}
