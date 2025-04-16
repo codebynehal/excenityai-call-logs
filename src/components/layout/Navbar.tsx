@@ -4,6 +4,7 @@ import { LogOut, Menu, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface NavbarProps {
   toggleSidebar?: () => void;
@@ -11,13 +12,27 @@ interface NavbarProps {
 
 export function Navbar({ toggleSidebar }: NavbarProps) {
   const isMobile = useIsMobile();
-  const { signOut, adminSignOut, isAdmin } = useAuth();
+  const { signOut, adminSignOut, isAdmin, user } = useAuth();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
-    if (isAdmin) {
-      await adminSignOut();
-    } else {
-      await signOut();
+    try {
+      if (isAdmin) {
+        await adminSignOut();
+      } else {
+        await signOut();
+      }
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account"
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Logout failed",
+        description: "There was an issue logging you out",
+        variant: "destructive"
+      });
     }
   };
 
@@ -41,19 +56,21 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
         </div>
         
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size={isMobile ? "icon" : "default"}
-            className="text-white"
-            onClick={handleLogout}
-          >
-            {isMobile ? <LogOut className="h-5 w-5" /> : (
-              <>
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </>
-            )}
-          </Button>
+          {user && (
+            <Button
+              variant="ghost"
+              size={isMobile ? "icon" : "default"}
+              className="text-white"
+              onClick={handleLogout}
+            >
+              {isMobile ? <LogOut className="h-5 w-5" /> : (
+                <>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>
