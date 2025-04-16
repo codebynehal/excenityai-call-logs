@@ -162,6 +162,7 @@ const CallList = () => {
               calls={filteredCalls} 
               isLoading={isLoading} 
               count={calls.length}
+              onCallClick={(callId) => navigate(`/calls/details/${callId}`)}
             />
           </TabsContent>
           
@@ -170,6 +171,7 @@ const CallList = () => {
               calls={filteredCalls} 
               isLoading={isLoading} 
               count={calls.filter(c => c.callType === "inboundPhoneCall").length}
+              onCallClick={(callId) => navigate(`/calls/details/${callId}`)}
             />
           </TabsContent>
           
@@ -178,6 +180,7 @@ const CallList = () => {
               calls={filteredCalls} 
               isLoading={isLoading} 
               count={calls.filter(c => c.callType === "outboundPhoneCall").length}
+              onCallClick={(callId) => navigate(`/calls/details/${callId}`)}
             />
           </TabsContent>
         </Tabs>
@@ -190,11 +193,10 @@ interface CallListContentProps {
   calls: CallRecord[];
   isLoading: boolean;
   count: number;
+  onCallClick: (callId: string) => void;
 }
 
-const CallListContent = ({ calls, isLoading, count }: CallListContentProps) => {
-  const navigate = useNavigate();
-  
+const CallListContent = ({ calls, isLoading, count, onCallClick }: CallListContentProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -232,7 +234,7 @@ const CallListContent = ({ calls, isLoading, count }: CallListContentProps) => {
           <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors">
             <CallListItem 
               call={call}
-              onClick={() => navigate(`/calls/details/${call.id}`)}
+              onClick={() => onCallClick(call.id)}
             />
           </Card>
         ))}

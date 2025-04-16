@@ -25,16 +25,16 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
     
     // Handle string transcript
     if (typeof call.transcript === 'string') {
-      return call.transcript.substring(0, 30) + "...";
+      return call.transcript.slice(0, 30) + "...";
     }
     
     // Handle array transcript with type checking
     if (Array.isArray(call.transcript)) {
       const firstMessage = call.transcript[0];
       if (firstMessage && typeof firstMessage === 'object' && 'message' in firstMessage) {
-        // Explicitly cast to string to ensure TypeScript knows we have a string
-        const message = firstMessage.message as string;
-        return message.substring(0, 30) + "...";
+        if (typeof firstMessage.message === 'string') {
+          return firstMessage.message.slice(0, 30) + "...";
+        }
       }
     }
     
