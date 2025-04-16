@@ -34,7 +34,8 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
     
     // Handle string transcript (fallback)
     if (typeof call.transcript === 'string') {
-      return call.transcript.length > 30 ? `${call.transcript.slice(0, 30)}...` : call.transcript;
+      const transcriptStr = call.transcript as string;
+      return transcriptStr.length > 30 ? `${transcriptStr.slice(0, 30)}...` : transcriptStr;
     }
     
     return "No transcript available";
