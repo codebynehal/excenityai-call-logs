@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
+import AdminLogin from "./pages/AdminLogin";
+import AdminPanel from "./pages/AdminPanel";
 import { MainLayout } from "./components/layout/MainLayout";
 import CallList from "./pages/CallList";
 import CallDetails from "./pages/CallDetails";
@@ -25,6 +27,25 @@ const ProtectedRoute = () => {
   
   if (!user) {
     return <Navigate to="/" replace />;
+  }
+  
+  return <Outlet />;
+};
+
+// Admin only route
+const AdminRoute = () => {
+  const { user, loading, isAdmin } = useAuth();
+  
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/admin-login" replace />;
+  }
+  
+  if (!isAdmin) {
+    return <Navigate to="/calls" replace />;
   }
   
   return <Outlet />;
@@ -49,6 +70,7 @@ const AppRoutes = () => (
   <Routes>
     <Route path="/" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
     <Route path="/signup" element={<PublicOnlyRoute><SignUp /></PublicOnlyRoute>} />
+    <Route path="/admin-login" element={<AdminLogin />} />
     
     <Route element={<ProtectedRoute />}>
       <Route element={<MainLayout />}>
@@ -56,6 +78,10 @@ const AppRoutes = () => (
         <Route path="/calls/:callType" element={<CallList />} />
         <Route path="/calls/details/:callId" element={<CallDetails />} />
         <Route path="/profile" element={<div className="p-4">Profile page coming soon</div>} />
+      </Route>
+      
+      <Route element={<AdminRoute />}>
+        <Route path="/admin" element={<AdminPanel />} />
       </Route>
     </Route>
     

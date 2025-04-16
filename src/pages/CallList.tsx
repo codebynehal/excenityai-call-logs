@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CallRecord, fetchCalls } from "@/services/vapiService";
+import { CallRecord, fetchCalls, getUserAllowedAssistantIds } from "@/services/vapiService";
 import { useQuery } from "@tanstack/react-query";
 import {
   Pagination,
@@ -41,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define call types
 type CallType = "inbound" | "outbound" | "all";
@@ -52,6 +52,8 @@ export default function CallList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [selectedEndReason, setSelectedEndReason] = useState<CallEndReason>("all");
+  const [selectedAssistantPhone, setSelectedAssistantPhone] = useState<string | null>(null);
+  const { user } = useAuth();
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,6 +64,22 @@ export default function CallList() {
     queryKey: ['calls'],
     queryFn: fetchCalls,
   });
+
+  // Get allowed assistant IDs for the current user
+  const allowedAssistantIds = user?.email 
+    ? getUserAllowedAssistantIds(user.email) 
+    : [];
+
+  // Filter calls by allowed assistant IDs if any are set
+  const filterByAllowedAssistants = (calls: CallRecord[]): CallRecord[] => {
+    // If no allowed assistants are set, or the array is empty, show all calls
+    if (!user?.email || allowedAssistantIds.length === 0) {
+      return calls;
+    }
+    
+    // Otherwise filter to only show calls from allowed assistants
+    return calls.filter(call => allowedAssistantIds.includes(call.assistantId));
+  };
 
   // Filter the calls based on callType URL parameter
   const filterByCallType = (calls: CallRecord[]): CallRecord[] => {
@@ -77,7 +95,8 @@ export default function CallList() {
     return calls.filter(
       (call) =>
         call.customerPhone.toLowerCase().includes(query) ||
-        call.agentName.toLowerCase().includes(query)
+        call.agentName.toLowerCase().includes(query) ||
+        call.assistantPhone.toLowerCase().includes(query) // Also search in assistantPhone
     );
   };
 
@@ -85,6 +104,12 @@ export default function CallList() {
   const filterByAgent = (calls: CallRecord[]): CallRecord[] => {
     if (!selectedAgent) return calls;
     return calls.filter((call) => call.agentName === selectedAgent);
+  };
+
+  // Filter calls by assistant phone
+  const filterByAssistantPhone = (calls: CallRecord[]): CallRecord[] => {
+    if (!selectedAssistantPhone) return calls;
+    return calls.filter((call) => call.assistantPhone === selectedAssistantPhone);
   };
 
   // Filter calls by end reason
@@ -95,11 +120,22 @@ export default function CallList() {
 
   // Apply all filters
   const filteredCalls = filterByEndReason(
-    filterByAgent(filterBySearchQuery(filterByCallType(calls)))
+    filterByAssistantPhone(
+      filterByAgent(
+        filterBySearchQuery(
+          filterByCallType(
+            filterByAllowedAssistants(calls)
+          )
+        )
+      )
+    )
   );
 
   // Get unique agents
   const uniqueAgents = Array.from(new Set(calls.map((call) => call.agentName)));
+
+  // Get unique assistant phone numbers
+  const uniqueAssistantPhones = Array.from(new Set(calls.map((call) => call.assistantPhone)));
 
   // Handle pagination
   const totalCalls = filteredCalls.length;
@@ -262,6 +298,27 @@ export default function CallList() {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                    Assistant Phone
+                  </DropdownMenuLabel>
+                  <DropdownMenuItem 
+                    onClick={() => setSelectedAssistantPhone(null)}
+                    className={!selectedAssistantPhone ? "bg-accent text-white" : ""}
+                  >
+                    All Assistant Phones
+                  </DropdownMenuItem>
+                  {uniqueAssistantPhones.map((phone) => (
+                    <DropdownMenuItem
+                      key={phone}
+                      onClick={() => setSelectedAssistantPhone(phone)}
+                      className={selectedAssistantPhone === phone ? "bg-accent text-white" : ""}
+                    >
+                      {phone}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
                     End Reason
                   </DropdownMenuLabel>
                   <DropdownMenuItem 
@@ -305,7 +362,8 @@ export default function CallList() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12">Type</TableHead>
-                  <TableHead>Phone Number</TableHead>
+                  <TableHead>Customer Phone</TableHead>
+                  <TableHead>Assistant Phone</TableHead>
                   <TableHead className="hidden md:table-cell">Agent</TableHead>
                   <TableHead className="hidden md:table-cell">Date & Time</TableHead>
                   <TableHead className="hidden md:table-cell">Duration</TableHead>
@@ -319,6 +377,7 @@ export default function CallList() {
                     <TableRow key={index}>
                       <TableCell><Skeleton className="h-4 w-8" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                       <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                       <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
                       <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-16" /></TableCell>
@@ -330,7 +389,7 @@ export default function CallList() {
               ) : error ? (
                 <TableBody>
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       <div className="flex flex-col items-center space-y-2">
                         <div className="text-destructive">Error loading calls</div>
                         <p className="text-sm text-muted-foreground">Please try again later</p>
@@ -341,7 +400,7 @@ export default function CallList() {
               ) : filteredCalls.length === 0 ? (
                 <TableBody>
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={8} className="h-24 text-center">
                       No calls found matching your filters.
                     </TableCell>
                   </TableRow>
@@ -359,6 +418,7 @@ export default function CallList() {
                           </span>
                         </div>
                       </TableCell>
+                      <TableCell>{call.assistantPhone}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {call.agentName}
                       </TableCell>

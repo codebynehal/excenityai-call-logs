@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Define the types for the API responses
@@ -6,7 +5,9 @@ export interface CallRecord {
   id: string;
   callType: "outboundPhoneCall" | "inboundPhoneCall";
   customerPhone: string;
+  assistantPhone: string; // Added assistant phone number
   agentName: string;
+  assistantId: string; // Added assistant ID for filtering
   date: string;
   time: string;
   duration: string;
@@ -43,6 +44,10 @@ export interface VapiCallData {
   assistant: {
     id: string;
     name: string;
+    phoneNumber?: string; // Phone number might be in assistant object
+  };
+  phoneNumber?: {
+    number: string; // Phone number might be in phoneNumber object
   };
 }
 
@@ -164,11 +169,18 @@ const mapVapiCallToCallRecord = (vapiCall: VapiCallData): CallRecord => {
   // Determine the customer phone number
   const customerPhone = vapiCall.customer?.number || "Unknown";
   
+  // Determine the assistant phone number
+  const assistantPhone = vapiCall.phoneNumber?.number || 
+                        vapiCall.assistant?.phoneNumber || 
+                        "Unknown";
+
   return {
     id: vapiCall.id,
     callType,
     customerPhone,
+    assistantPhone,
     agentName: vapiCall.assistant?.name || "Unknown",
+    assistantId: vapiCall.assistantId || "Unknown",
     date,
     time,
     duration: formatDuration(durationSeconds),
@@ -231,5 +243,67 @@ export const fetchCallById = async (callId: string): Promise<CallRecord | null> 
     console.error(`Failed to fetch call ${callId}:`, error);
     toast.error("Failed to load call details. Please try again later.");
     return null;
+  }
+};
+
+// Local storage functions for user-assistant mappings
+export interface UserAssistantMapping {
+  userEmail: string;
+  assistantIds: string[];
+}
+
+const USER_ASSISTANT_MAPPINGS_KEY = 'user_assistant_mappings';
+
+export const getUserAssistantMappings = (): UserAssistantMapping[] => {
+  const mappingsStr = localStorage.getItem(USER_ASSISTANT_MAPPINGS_KEY);
+  return mappingsStr ? JSON.parse(mappingsStr) : [];
+};
+
+export const saveUserAssistantMappings = (mappings: UserAssistantMapping[]): void => {
+  localStorage.setItem(USER_ASSISTANT_MAPPINGS_KEY, JSON.stringify(mappings));
+};
+
+export const getUserAllowedAssistantIds = (userEmail: string): string[] => {
+  const mappings = getUserAssistantMappings();
+  const userMapping = mappings.find(m => m.userEmail.toLowerCase() === userEmail.toLowerCase());
+  return userMapping?.assistantIds || [];
+};
+
+export const addUserAssistantMapping = (userEmail: string, assistantId: string): void => {
+  const mappings = getUserAssistantMappings();
+  const existingIndex = mappings.findIndex(m => m.userEmail.toLowerCase() === userEmail.toLowerCase());
+  
+  if (existingIndex >= 0) {
+    // User exists, add assistant if not already mapped
+    if (!mappings[existingIndex].assistantIds.includes(assistantId)) {
+      mappings[existingIndex].assistantIds.push(assistantId);
+    }
+  } else {
+    // New user
+    mappings.push({
+      userEmail,
+      assistantIds: [assistantId]
+    });
+  }
+  
+  saveUserAssistantMappings(mappings);
+};
+
+export const removeUserAssistantMapping = (userEmail: string, assistantId: string): void => {
+  const mappings = getUserAssistantMappings();
+  const existingIndex = mappings.findIndex(m => m.userEmail.toLowerCase() === userEmail.toLowerCase());
+  
+  if (existingIndex >= 0) {
+    // Filter out the assistant ID
+    mappings[existingIndex].assistantIds = mappings[existingIndex].assistantIds.filter(
+      id => id !== assistantId
+    );
+    
+    // Remove the user if they have no assistants left
+    if (mappings[existingIndex].assistantIds.length === 0) {
+      mappings.splice(existingIndex, 1);
+    }
+    
+    saveUserAssistantMappings(mappings);
   }
 };
