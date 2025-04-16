@@ -12,6 +12,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  adminSignOut: () => Promise<void>; // New function for admin logout
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,8 +77,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     navigate('/');
   };
 
+  // New function specifically for admin logout
+  const adminSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate('/admin-login');
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user, loading, isAdmin, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ 
+      session, 
+      user, 
+      loading, 
+      isAdmin, 
+      signIn, 
+      signUp, 
+      signOut,
+      adminSignOut 
+    }}>
       {children}
     </AuthContext.Provider>
   );

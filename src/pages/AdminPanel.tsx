@@ -14,7 +14,7 @@ import { AddAssistantAccess } from "@/components/admin/AddAssistantAccess";
 import { UserMappingsList } from "@/components/admin/UserMappingsList";
 
 export default function AdminPanel() {
-  const { isAdmin, signOut } = useAuth();
+  const { isAdmin, adminSignOut } = useAuth();
   const navigate = useNavigate();
   const [userMappings, setUserMappings] = useState<UserAssistantMapping[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,7 +98,7 @@ export default function AdminPanel() {
           <Button 
             variant="destructive" 
             size="sm" 
-            onClick={signOut}
+            onClick={adminSignOut}
             className="flex items-center gap-2"
           >
             <LogOut className="h-4 w-4" />

@@ -11,10 +11,14 @@ interface NavbarProps {
 
 export function Navbar({ toggleSidebar }: NavbarProps) {
   const isMobile = useIsMobile();
-  const { signOut } = useAuth();
+  const { signOut, adminSignOut, isAdmin } = useAuth();
 
   const handleLogout = async () => {
-    await signOut();
+    if (isAdmin) {
+      await adminSignOut();
+    } else {
+      await signOut();
+    }
   };
 
   return (
