@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,17 +58,23 @@ export default function AdminPanel() {
     const fetchUsers = async () => {
       setIsLoading(true);
       try {
+        // Fetch user emails from the profiles table and auth.users join
         const { data, error } = await supabase
-          .rpc('get_user_emails_for_admin');
+          .from('profiles')
+          .select('id, email:auth.users!inner(email)')
+          .not('auth.users.email', 'ilike', '%@excenityai.com');
         
         if (error) {
           throw error;
         }
         
         if (data && data.length > 0) {
-          const emails = data.map((user: { email: string }) => user.email);
+          // Extract emails from the joined result
+          const emails = data.map(profile => profile.email.email);
           setUserEmails(emails);
+          console.log("Fetched emails:", emails);
         } else {
+          // If no profiles found, try fetching from user_assistant_mappings as fallback
           const { data: mappingsData, error: mappingsError } = await supabase
             .from('user_assistant_mappings')
             .select('user_email')
@@ -79,8 +86,10 @@ export default function AdminPanel() {
           
           if (mappingEmails.length > 0) {
             setUserEmails(mappingEmails);
+            console.log("Using mapping emails as fallback:", mappingEmails);
           } else {
             setUserEmails(['user@example.com']);
+            console.log("Using placeholder email");
           }
         }
       } catch (error: any) {
