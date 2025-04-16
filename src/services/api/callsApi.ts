@@ -5,7 +5,7 @@ import { mapVapiCallToCallRecord } from "../utils/callUtils";
 import { supabase } from "@/integrations/supabase/client";
 
 // API Service
-const VAPI_API_KEY = "67ee4ce1-384f-47f2-9b2d-2127fb658dc7";
+const VAPI_API_KEY = "c527228b-7319-4603-b301-d5e7a4f837c2";
 
 // Cache for assistant details to avoid duplicate API calls
 const assistantDetailsCache: Record<string, VapiAssistantData> = {};
