@@ -28,14 +28,13 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
       const firstMessage = call.transcript[0];
       if (firstMessage && typeof firstMessage.message === 'string') {
         const message = firstMessage.message;
-        return message.length > 30 ? `${message.substring(0, 30)}...` : message;
+        return message.length > 30 ? `${message.slice(0, 30)}...` : message;
       }
     }
     
     // Handle string transcript (fallback)
     if (typeof call.transcript === 'string') {
-      const transcript = call.transcript;
-      return transcript.length > 30 ? `${transcript.substring(0, 30)}...` : transcript;
+      return call.transcript.length > 30 ? `${call.transcript.slice(0, 30)}...` : call.transcript;
     }
     
     return "No transcript available";
