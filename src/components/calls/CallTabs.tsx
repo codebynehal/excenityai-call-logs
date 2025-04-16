@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Phone, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import { Phone, PhoneIncoming, PhoneOutgoing, Video } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CallRecord } from "@/services/types/callTypes";
 import CallListContent from "./CallListContent";
@@ -32,10 +32,11 @@ const CallTabs = ({
 }: CallTabsProps) => {
   const inboundCallCount = calls.filter(c => c.callType === "inboundPhoneCall").length;
   const outboundCallCount = calls.filter(c => c.callType === "outboundPhoneCall").length;
+  const webCallCount = calls.filter(c => c.callType === "webCall").length;
 
   return (
     <Tabs defaultValue={tab} value={tab} onValueChange={onTabChange}>
-      <TabsList className="grid w-full grid-cols-3 mb-4">
+      <TabsList className="grid w-full grid-cols-4 mb-4">
         <TabsTrigger value="all" className="flex items-center gap-2">
           <Phone className="h-4 w-4" />
           All Calls
@@ -47,6 +48,10 @@ const CallTabs = ({
         <TabsTrigger value="outboundPhoneCall" className="flex items-center gap-2">
           <PhoneOutgoing className="h-4 w-4" />
           Outbound
+        </TabsTrigger>
+        <TabsTrigger value="webCall" className="flex items-center gap-2">
+          <Video className="h-4 w-4" />
+          Web Calls
         </TabsTrigger>
       </TabsList>
       
@@ -81,6 +86,19 @@ const CallTabs = ({
           calls={filteredCalls} 
           isLoading={isLoading} 
           count={outboundCallCount}
+          onCallClick={onCallClick}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          pageSize={pageSize}
+        />
+      </TabsContent>
+      
+      <TabsContent value="webCall" className="mt-0">
+        <CallListContent 
+          calls={filteredCalls} 
+          isLoading={isLoading} 
+          count={webCallCount}
           onCallClick={onCallClick}
           currentPage={currentPage}
           totalPages={totalPages}
