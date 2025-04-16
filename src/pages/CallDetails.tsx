@@ -6,87 +6,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar, Clock, Download, Headphones, MessageSquareText, Phone, PhoneIncoming, PhoneOutgoing, User } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-
-// Define the call record type
-interface CallRecord {
-  id: string;
-  callType: "outboundPhoneCall" | "inboundPhoneCall";
-  customerPhone: string;
-  agentName: string;
-  date: string;
-  time: string;
-  duration: string;
-  endReason: string;
-  recordingUrl?: string;
-  summary?: string;
-  transcript?: {
-    time: string;
-    speaker: string;
-    message: string;
-  }[];
-}
-
-// Mock data based on the sample call record
-const mockCallRecord: CallRecord = {
-  id: "3743b66d-6e42-4321-9919-3b48ba875818",
-  callType: "outboundPhoneCall",
-  customerPhone: "+61411453140",
-  agentName: "Jessica",
-  date: "2025-04-16",
-  time: "03:09 AM",
-  duration: "1:03",
-  endReason: "customer-ended-call",
-  recordingUrl: "https://storage.vapi.ai/3743b66d-6e42-4321-9919-3b48ba875818-1744773051620-49d24ed8-dfdc-4560-8f32-c6125ab83886-mono.wav",
-  summary: `The call was between Jessica from Business Jam and Matt, who had previously used their business valuation tool. 
-  
-  Key Points:
-  - Jessica called to follow up on Matt's use of their business valuation tool
-  - Matt indicated he thought the valuation estimate was "a little bit low"
-  - Jessica offered to ask additional questions to provide a more refined valuation
-  - Matt agreed to answer questions, but his subsequent responses became incoherent and disjointed`,
-  transcript: [
-    {
-      time: "0:00",
-      speaker: "AI",
-      message: "Hi, Matt. It's Jessica from Business Jam. You used our business valuation tool recently. Just wanted to check what you thought of the estimate that came through."
-    },
-    {
-      time: "0:19",
-      speaker: "Matt",
-      message: "It seems a little bit low."
-    },
-    {
-      time: "0:26",
-      speaker: "AI",
-      message: "Oh, I see. Well, I'm here to give you a more refined version. Sometimes the tool doesn't catch everything, and a few extra details can make a big difference. Would it be okay if I ask a few quick questions?"
-    },
-    {
-      time: "0:52",
-      speaker: "Matt",
-      message: "Yeah. No problem. Maybe you can't be hearing that. No doubt, sir. Back end of the van. Yes. That's that's okay. Yeah. At least music. Yeah."
-    }
-  ]
-};
+import { CallRecord, fetchCallById } from "@/services/vapiService";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function CallDetails() {
   const { callId } = useParams<{ callId: string }>();
-  const [callRecord, setCallRecord] = useState<CallRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Fetch call data (using mock data for now)
+  // Fetch call data using React Query
+  const { data: callRecord, isLoading, error } = useQuery({
+    queryKey: ['call', callId],
+    queryFn: () => fetchCallById(callId || ''),
+    enabled: !!callId,
+  });
+
   useEffect(() => {
-    // Simulate API fetch
-    setTimeout(() => {
-      setCallRecord(mockCallRecord);
-      setIsLoading(false);
-    }, 1000);
-  }, [callId]);
+    // If there's an error or the call is not found, show a toast
+    if (error) {
+      toast.error("Failed to load call data");
+    }
+  }, [error]);
 
   // Audio player controls
   const togglePlayPause = () => {
@@ -94,7 +40,10 @@ export default function CallDetails() {
       if (isPlaying) {
         audioRef.current.pause();
       } else {
-        audioRef.current.play();
+        audioRef.current.play().catch(err => {
+          console.error("Audio playback error:", err);
+          toast.error("Failed to play audio recording");
+        });
       }
       setIsPlaying(!isPlaying);
     }
@@ -129,12 +78,9 @@ export default function CallDetails() {
   // Download recording function
   const downloadRecording = () => {
     if (callRecord?.recordingUrl) {
-      const link = document.createElement('a');
-      link.href = callRecord.recordingUrl;
-      link.download = `call-recording-${callId}.wav`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      window.open(callRecord.recordingUrl, '_blank');
+    } else {
+      toast.error("No recording available for this call");
     }
   };
 
@@ -162,7 +108,7 @@ export default function CallDetails() {
     );
   }
 
-  // Error state
+  // Error or call not found state
   if (!callRecord) {
     return (
       <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
@@ -198,6 +144,7 @@ export default function CallDetails() {
           variant="outline"
           className="gap-2 w-full sm:w-auto"
           onClick={downloadRecording}
+          disabled={!callRecord.recordingUrl}
         >
           <Download className="h-4 w-4" />
           Download Recording
@@ -217,53 +164,61 @@ export default function CallDetails() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <audio 
-              ref={audioRef} 
-              src={callRecord.recordingUrl}
-              onTimeUpdate={handleTimeUpdate}
-              onLoadedMetadata={handleLoadedMetadata}
-              onEnded={handleEnded}
-              className="hidden"
-            />
-            
-            <div className="w-full h-32 bg-background/20 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10 bg-gradient-to-b from-orange-400 to-transparent"></div>
-              
-              <div className="relative z-10 flex flex-col items-center justify-center w-full h-full gap-4">
-                <div className="text-2xl font-semibold tracking-tighter text-center">
-                  {callRecord.customerPhone}
-                </div>
+            {callRecord.recordingUrl ? (
+              <>
+                <audio 
+                  ref={audioRef} 
+                  src={callRecord.recordingUrl}
+                  onTimeUpdate={handleTimeUpdate}
+                  onLoadedMetadata={handleLoadedMetadata}
+                  onEnded={handleEnded}
+                  className="hidden"
+                />
                 
-                <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium">{formatTime(currentTime)}</span>
-                  <div className="relative w-64 h-1 bg-gray-700 rounded-full">
-                    <div 
-                      className="absolute top-0 left-0 h-full bg-orange-500 rounded-full"
-                      style={{ width: `${(currentTime / duration) * 100}%` }}
-                    ></div>
+                <div className="w-full h-32 bg-background/20 backdrop-blur-sm rounded-lg flex flex-col items-center justify-center p-4 relative overflow-hidden">
+                  <div className="absolute inset-0 opacity-10 bg-gradient-to-b from-orange-400 to-transparent"></div>
+                  
+                  <div className="relative z-10 flex flex-col items-center justify-center w-full h-full gap-4">
+                    <div className="text-2xl font-semibold tracking-tighter text-center">
+                      {callRecord.customerPhone}
+                    </div>
+                    
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium">{formatTime(currentTime)}</span>
+                      <div className="relative w-64 h-1 bg-gray-700 rounded-full">
+                        <div 
+                          className="absolute top-0 left-0 h-full bg-orange-500 rounded-full"
+                          style={{ width: `${(currentTime / duration) * 100}%` }}
+                        ></div>
+                      </div>
+                      <span className="text-sm font-medium">{formatTime(duration)}</span>
+                    </div>
+                    
+                    <Button 
+                      onClick={togglePlayPause} 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-10 w-10 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      {isPlaying ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <rect x="6" y="4" width="4" height="16" />
+                          <rect x="14" y="4" width="4" height="16" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                          <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                      )}
+                    </Button>
                   </div>
-                  <span className="text-sm font-medium">{formatTime(duration)}</span>
                 </div>
-                
-                <Button 
-                  onClick={togglePlayPause} 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-10 w-10 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
-                >
-                  {isPlaying ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                      <rect x="6" y="4" width="4" height="16" />
-                      <rect x="14" y="4" width="4" height="16" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                      <polygon points="5 3 19 12 5 21 5 3" />
-                    </svg>
-                  )}
-                </Button>
+              </>
+            ) : (
+              <div className="w-full h-32 bg-background/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">No recording available for this call</p>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -361,7 +316,7 @@ export default function CallDetails() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {callRecord.transcript ? (
+                {callRecord.transcript && callRecord.transcript.length > 0 ? (
                   callRecord.transcript.map((entry, index) => (
                     <div 
                       key={index} 
@@ -389,7 +344,7 @@ export default function CallDetails() {
                           : "bg-muted rounded-tr-none"
                       }`}>
                         <div className="text-sm font-medium mb-1">
-                          {entry.speaker}
+                          {entry.speaker === "AI" ? "AI Assistant" : "Customer"}
                         </div>
                         <div className="text-sm">
                           {entry.message}
@@ -426,7 +381,7 @@ export default function CallDetails() {
             <CardContent>
               {callRecord.summary ? (
                 <div className="bg-secondary/40 backdrop-blur-sm p-4 rounded-lg">
-                  <p className="leading-relaxed">
+                  <p className="leading-relaxed whitespace-pre-line">
                     {callRecord.summary}
                   </p>
                 </div>

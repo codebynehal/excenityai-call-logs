@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -11,9 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronDown, Filter, Search, Phone, PhoneIncoming, PhoneOutgoing, Clock, Calendar, Download } from "lucide-react";
+import { ChevronDown, Filter, Search, Phone, PhoneIncoming, PhoneOutgoing, Clock, Calendar } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -25,86 +24,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CallRecord, fetchCalls } from "@/services/vapiService";
+import { useQuery } from "@tanstack/react-query";
 
 // Define call types
 type CallType = "inbound" | "outbound" | "all";
 type CallEndReason = "completed" | "missed" | "busy" | "failed" | "all";
-
-// Define the call record type
-interface CallRecord {
-  id: string;
-  callType: "inbound" | "outbound";
-  customerPhone: string;
-  agentName: string;
-  date: string;
-  time: string;
-  duration: string;
-  endReason: "completed" | "missed" | "busy" | "failed";
-}
-
-// Mock data for call records
-const mockCalls: CallRecord[] = [
-  {
-    id: "call-1",
-    callType: "inbound",
-    customerPhone: "+1 (555) 123-4567",
-    agentName: "John Doe",
-    date: "2025-04-15",
-    time: "10:30 AM",
-    duration: "5:23",
-    endReason: "completed",
-  },
-  {
-    id: "call-2",
-    callType: "outbound",
-    customerPhone: "+1 (555) 987-6543",
-    agentName: "Jane Smith",
-    date: "2025-04-15",
-    time: "11:45 AM",
-    duration: "3:12",
-    endReason: "completed",
-  },
-  {
-    id: "call-3",
-    callType: "inbound",
-    customerPhone: "+1 (555) 456-7890",
-    agentName: "Mark Johnson",
-    date: "2025-04-14",
-    time: "2:15 PM",
-    duration: "0:00",
-    endReason: "missed",
-  },
-  {
-    id: "call-4",
-    callType: "outbound",
-    customerPhone: "+1 (555) 222-3333",
-    agentName: "Sarah Williams",
-    date: "2025-04-14",
-    time: "4:30 PM",
-    duration: "7:45",
-    endReason: "completed",
-  },
-  {
-    id: "call-5",
-    callType: "inbound",
-    customerPhone: "+1 (555) 777-8888",
-    agentName: "John Doe",
-    date: "2025-04-13",
-    time: "9:10 AM",
-    duration: "0:00",
-    endReason: "busy",
-  },
-  {
-    id: "call-6",
-    callType: "outbound",
-    customerPhone: "+1 (555) 444-5555",
-    agentName: "Jane Smith",
-    date: "2025-04-13",
-    time: "3:20 PM",
-    duration: "0:00",
-    endReason: "failed",
-  },
-];
 
 // Call list component
 export default function CallList() {
@@ -112,12 +37,18 @@ export default function CallList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [selectedEndReason, setSelectedEndReason] = useState<CallEndReason>("all");
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // Fetch calls using React Query
+  const { data: calls = [], isLoading, error } = useQuery({
+    queryKey: ['calls'],
+    queryFn: fetchCalls,
+  });
 
   // Filter the calls based on callType URL parameter
   const filterByCallType = (calls: CallRecord[]): CallRecord[] => {
     if (callType === "all") return calls;
-    return calls.filter((call) => call.callType === callType);
+    const mappedType = callType === "inbound" ? "inboundPhoneCall" : "outboundPhoneCall";
+    return calls.filter((call) => call.callType === mappedType);
   };
 
   // Filter calls by search query
@@ -145,15 +76,15 @@ export default function CallList() {
 
   // Apply all filters
   const filteredCalls = filterByEndReason(
-    filterByAgent(filterBySearchQuery(filterByCallType(mockCalls)))
+    filterByAgent(filterBySearchQuery(filterByCallType(calls)))
   );
 
   // Get unique agents
-  const uniqueAgents = Array.from(new Set(mockCalls.map((call) => call.agentName)));
+  const uniqueAgents = Array.from(new Set(calls.map((call) => call.agentName)));
 
   // Display the call icon based on call type
-  const getCallIcon = (type: "inbound" | "outbound") => {
-    return type === "inbound" ? (
+  const getCallIcon = (type: string) => {
+    return type === "inboundPhoneCall" ? (
       <PhoneIncoming className="h-4 w-4 text-green-500" />
     ) : (
       <PhoneOutgoing className="h-4 w-4 text-blue-500" />
@@ -312,53 +243,64 @@ export default function CallList() {
                     </TableRow>
                   ))}
                 </TableBody>
+              ) : error ? (
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <div className="flex flex-col items-center space-y-2">
+                        <div className="text-destructive">Error loading calls</div>
+                        <p className="text-sm text-muted-foreground">Please try again later</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              ) : filteredCalls.length === 0 ? (
+                <TableBody>
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No calls found matching your filters.
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
               ) : (
                 <TableBody>
-                  {filteredCalls.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        No calls found matching your filters.
+                  {filteredCalls.map((call) => (
+                    <TableRow key={call.id}>
+                      <TableCell>{getCallIcon(call.callType)}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col">
+                          {call.customerPhone}
+                          <span className="md:hidden text-xs text-muted-foreground">
+                            {call.agentName}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {call.agentName}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>{call.date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{call.time}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {call.duration}
+                      </TableCell>
+                      <TableCell>{getEndReasonBadge(call.endReason)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="icon" variant="ghost" asChild>
+                          <Link to={`/calls/details/${call.id}`}>
+                            <Search className="h-4 w-4" />
+                          </Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredCalls.map((call) => (
-                      <TableRow key={call.id}>
-                        <TableCell>{getCallIcon(call.callType)}</TableCell>
-                        <TableCell className="font-medium">
-                          <div className="flex flex-col">
-                            {call.customerPhone}
-                            <span className="md:hidden text-xs text-muted-foreground">
-                              {call.agentName}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {call.agentName}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span>{call.date}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span>{call.time}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {call.duration}
-                        </TableCell>
-                        <TableCell>{getEndReasonBadge(call.endReason)}</TableCell>
-                        <TableCell className="text-right">
-                          <Button size="icon" variant="ghost" asChild>
-                            <Link to={`/calls/details/${call.id}`}>
-                              <Search className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               )}
             </Table>
