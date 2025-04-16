@@ -6,13 +6,15 @@
 export type {
   CallRecord,
   VapiCallData,
+  VapiAssistantData,
   UserAssistantMapping
 } from './types/callTypes';
 
 // Re-export calls API functions
 export {
   fetchCalls,
-  fetchCallById
+  fetchCallById,
+  fetchAssistantDetails
 } from './api/callsApi';
 
 // Re-export user-assistant mappings API functions

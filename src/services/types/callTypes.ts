@@ -51,6 +51,21 @@ export interface VapiCallData {
   };
 }
 
+// Assistant data from the Vapi API
+export interface VapiAssistantData {
+  id: string;
+  name: string;
+  description?: string;
+  phoneNumberId?: string;
+  phoneNumber?: {
+    id: string;
+    number: string;
+  };
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 // User-assistant mappings interface
 export interface UserAssistantMapping {
   userEmail: string;

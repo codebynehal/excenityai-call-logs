@@ -1,6 +1,6 @@
 
 import { toast } from "sonner";
-import { CallRecord, VapiCallData } from "../types/callTypes";
+import { CallRecord, VapiCallData, VapiAssistantData } from "../types/callTypes";
 import { mapVapiCallToCallRecord } from "../utils/callUtils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,6 +24,33 @@ const getUserAssistantIds = async (userEmail: string): Promise<string[]> => {
   } catch (error) {
     console.error("Failed to get user's assistant IDs:", error);
     return [];
+  }
+};
+
+// Fetch assistant details from Vapi API
+export const fetchAssistantDetails = async (assistantId: string): Promise<VapiAssistantData | null> => {
+  try {
+    console.log(`Fetching details for assistant ID: ${assistantId}`);
+    const response = await fetch(`https://api.vapi.ai/assistant/${assistantId}`, {
+      headers: {
+        "Authorization": `Bearer ${VAPI_API_KEY}`
+      }
+    });
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.warn(`Assistant with ID ${assistantId} not found`);
+        return null;
+      }
+      throw new Error(`Failed to fetch assistant details. Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Retrieved assistant details for ${assistantId}:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Error fetching assistant details for ${assistantId}:`, error);
+    return null;
   }
 };
 
@@ -76,9 +103,28 @@ export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[
       );
     }
     
-    return filteredData
-      .filter(call => call && call.id) // Filter out any null or invalid calls
-      .map(mapVapiCallToCallRecord);
+    // Process calls with assistant details
+    const enrichedCalls = await Promise.all(
+      filteredData
+        .filter(call => call && call.id) // Filter out any null or invalid calls
+        .map(async (call) => {
+          // If the call doesn't already have assistant name/details, fetch them
+          if (!call.assistant?.name && call.assistantId) {
+            const assistantDetails = await fetchAssistantDetails(call.assistantId);
+            if (assistantDetails) {
+              // Enrich the call data with assistant details
+              call.assistant = {
+                ...call.assistant,
+                id: call.assistantId,
+                name: assistantDetails.name || "Unnamed Assistant"
+              };
+            }
+          }
+          return mapVapiCallToCallRecord(call);
+        })
+    );
+    
+    return enrichedCalls;
   } catch (error) {
     console.error("Failed to fetch calls:", error);
     toast.error("Failed to load calls. Please try again later.");
@@ -104,6 +150,19 @@ export const fetchCallById = async (callId: string): Promise<CallRecord | null> 
     
     const data: VapiCallData = await response.json();
     console.log("Call detail response:", data); // Debug log
+    
+    // If the call doesn't have assistant details, fetch them
+    if (!data.assistant?.name && data.assistantId) {
+      const assistantDetails = await fetchAssistantDetails(data.assistantId);
+      if (assistantDetails) {
+        // Enrich the call data with assistant details
+        data.assistant = {
+          ...data.assistant,
+          id: data.assistantId,
+          name: assistantDetails.name || "Unnamed Assistant"
+        };
+      }
+    }
     
     return mapVapiCallToCallRecord(data);
   } catch (error) {
