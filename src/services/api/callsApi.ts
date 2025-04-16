@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 // API Service
 const VAPI_API_KEY = "67ee4ce1-384f-47f2-9b2d-2127fb658dc7";
 
+// Cache for assistant details to avoid duplicate API calls
+const assistantDetailsCache: Record<string, VapiAssistantData> = {};
+
 // Helper function to get user's allowed assistant IDs
 const getUserAssistantIds = async (userEmail: string): Promise<string[]> => {
   try {
@@ -27,9 +30,15 @@ const getUserAssistantIds = async (userEmail: string): Promise<string[]> => {
   }
 };
 
-// Fetch assistant details from Vapi API
+// Fetch assistant details from Vapi API and cache the results
 export const fetchAssistantDetails = async (assistantId: string): Promise<VapiAssistantData | null> => {
   try {
+    // Check if we already have cached details for this assistant
+    if (assistantDetailsCache[assistantId]) {
+      console.log(`Using cached details for assistant ID: ${assistantId}`);
+      return assistantDetailsCache[assistantId];
+    }
+    
     console.log(`Fetching details for assistant ID: ${assistantId}`);
     const response = await fetch(`https://api.vapi.ai/assistant/${assistantId}`, {
       headers: {
@@ -47,6 +56,10 @@ export const fetchAssistantDetails = async (assistantId: string): Promise<VapiAs
     
     const data = await response.json();
     console.log(`Retrieved assistant details for ${assistantId}:`, data);
+    
+    // Cache the assistant details for future use
+    assistantDetailsCache[assistantId] = data;
+    
     return data;
   } catch (error) {
     console.error(`Error fetching assistant details for ${assistantId}:`, error);
@@ -103,26 +116,37 @@ export const fetchCalls = async (userEmail?: string | null): Promise<CallRecord[
       );
     }
     
-    // Process calls with assistant details
-    const enrichedCalls = await Promise.all(
-      filteredData
-        .filter(call => call && call.id) // Filter out any null or invalid calls
-        .map(async (call) => {
-          // If the call doesn't already have assistant name/details, fetch them
-          if (!call.assistant?.name && call.assistantId) {
-            const assistantDetails = await fetchAssistantDetails(call.assistantId);
-            if (assistantDetails) {
-              // Enrich the call data with assistant details
-              call.assistant = {
-                ...call.assistant,
-                id: call.assistantId,
-                name: assistantDetails.name || "Unnamed Assistant"
-              };
-            }
-          }
-          return mapVapiCallToCallRecord(call);
-        })
+    // Pre-fetch all unique assistant details to avoid multiple API calls
+    const uniqueAssistantIds = [...new Set(filteredData.map(call => call.assistantId))];
+    console.log("Unique assistant IDs:", uniqueAssistantIds);
+    
+    // Fetch all assistant details in parallel and store in cache
+    await Promise.all(
+      uniqueAssistantIds.map(async (assistantId) => {
+        if (!assistantDetailsCache[assistantId]) {
+          await fetchAssistantDetails(assistantId);
+        }
+      })
     );
+    
+    // Process calls with cached assistant details
+    const enrichedCalls = filteredData
+      .filter(call => call && call.id) // Filter out any null or invalid calls
+      .map(call => {
+        // If the call doesn't already have assistant name/details
+        if (!call.assistant?.name && call.assistantId) {
+          const assistantDetails = assistantDetailsCache[call.assistantId];
+          if (assistantDetails) {
+            // Enrich the call data with assistant details
+            call.assistant = {
+              ...call.assistant,
+              id: call.assistantId,
+              name: assistantDetails.name || "Unnamed Assistant"
+            };
+          }
+        }
+        return mapVapiCallToCallRecord(call);
+      });
     
     return enrichedCalls;
   } catch (error) {
@@ -151,15 +175,25 @@ export const fetchCallById = async (callId: string): Promise<CallRecord | null> 
     const data: VapiCallData = await response.json();
     console.log("Call detail response:", data); // Debug log
     
-    // If the call doesn't have assistant details, fetch them
+    // If the call doesn't have assistant details, get them from cache or fetch
     if (!data.assistant?.name && data.assistantId) {
-      const assistantDetails = await fetchAssistantDetails(data.assistantId);
-      if (assistantDetails) {
+      if (!assistantDetailsCache[data.assistantId]) {
+        // If not in cache, fetch and cache it
+        const assistantDetails = await fetchAssistantDetails(data.assistantId);
+        if (assistantDetails) {
+          // Cache for future use
+          assistantDetailsCache[data.assistantId] = assistantDetails;
+        }
+      }
+      
+      // Get from cache (whether it was already there or just fetched)
+      const cachedDetails = assistantDetailsCache[data.assistantId];
+      if (cachedDetails) {
         // Enrich the call data with assistant details
         data.assistant = {
           ...data.assistant,
           id: data.assistantId,
-          name: assistantDetails.name || "Unnamed Assistant"
+          name: cachedDetails.name || "Unnamed Assistant"
         };
       }
     }
