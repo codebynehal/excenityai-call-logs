@@ -22,6 +22,8 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
       } else {
         await signOut();
       }
+      // Toast will be shown if the user stays on the same page
+      // but since we're redirecting, it might not be visible
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account"

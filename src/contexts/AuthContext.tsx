@@ -12,7 +12,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  adminSignOut: () => Promise<void>; // New function for admin logout
+  adminSignOut: () => Promise<void>; 
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,21 +75,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await supabase.auth.signOut();
+      // Force immediate local state update
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      // Redirect to login page
+      navigate('/login');
+    } catch (error) {
       console.error("Error signing out:", error);
-    } else {
+      // Even if error occurs, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
       navigate('/login');
     }
   };
 
   // Admin logout function
   const adminSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      await supabase.auth.signOut();
+      // Force immediate local state update
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      // Redirect to admin login page
+      navigate('/admin/login');
+    } catch (error) {
       console.error("Error signing out admin:", error);
-    } else {
-      navigate('/admin-login');
+      // Even if error occurs, clear local state and redirect
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      navigate('/admin/login');
     }
   };
 

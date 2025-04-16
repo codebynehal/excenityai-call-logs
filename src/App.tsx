@@ -23,7 +23,7 @@ function App() {
     <CallProvider>
       <Routes>
         <Route path="/" element={<MainLayout />}>
-          <Route index element={<Index />} />
+          <Route index element={user ? <Navigate to="/calls" replace /> : <Navigate to="/login" replace />} />
           
           {/* User routes (require login) */}
           {user ? (
@@ -46,8 +46,8 @@ function App() {
           )}
           
           {/* Public routes */}
-          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-          <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignUp />} />
+          <Route path="/login" element={user ? <Navigate to="/calls" replace /> : <Login />} />
+          <Route path="/signup" element={user ? <Navigate to="/calls" replace /> : <SignUp />} />
           
           {/* Admin auth routes */}
           <Route path="/admin/login" element={isAdmin ? <Navigate to="/admin" replace /> : <AdminLogin />} />
