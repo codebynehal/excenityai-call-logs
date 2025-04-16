@@ -26,7 +26,6 @@ export {
 // Re-export utility functions if needed elsewhere
 export {
   formatDate,
-  formatDuration,
   calculateDuration,
   processTranscript,
   mapVapiCallToCallRecord
