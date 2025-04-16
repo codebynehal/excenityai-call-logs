@@ -19,6 +19,21 @@ interface CallListItemProps {
 const CallListItem = ({ call, onClick }: CallListItemProps) => {
   const isInbound = call.callType === "inboundPhoneCall";
   
+  // Function to safely extract and format transcript snippet
+  const getTranscriptSnippet = (): string => {
+    if (!call.transcript) return "";
+    
+    if (typeof call.transcript === 'string') {
+      return call.transcript.substring(0, 30) + "...";
+    }
+    
+    if (Array.isArray(call.transcript) && call.transcript.length > 0 && call.transcript[0]?.message) {
+      return call.transcript[0].message.substring(0, 30) + "...";
+    }
+    
+    return "No transcript available";
+  };
+  
   return (
     <div 
       className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer" 
@@ -62,11 +77,7 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
         {call.transcript && (
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <MessageSquare className="h-3 w-3" />
-            <span>
-              {typeof call.transcript === 'string' 
-                ? call.transcript.substring(0, 30) + "..." 
-                : call.transcript[0]?.message.substring(0, 30) + "..."}
-            </span>
+            <span>{getTranscriptSnippet()}</span>
           </div>
         )}
       </div>
