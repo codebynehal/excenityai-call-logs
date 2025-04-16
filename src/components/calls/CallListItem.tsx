@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CallRecord } from "@/services/vapiService";
+import { CallRecord } from "@/services/types/callTypes";
 import { Badge } from "@/components/ui/badge";
 import { 
   PhoneCall, 
@@ -32,9 +32,9 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
     if (Array.isArray(call.transcript)) {
       const firstMessage = call.transcript[0];
       if (firstMessage && typeof firstMessage === 'object' && 'message' in firstMessage) {
-        if (typeof firstMessage.message === 'string') {
-          return firstMessage.message.slice(0, 30) + "...";
-        }
+        // Access message safely
+        const message = String(firstMessage.message || "");
+        return message.slice(0, 30) + "...";
       }
     }
     

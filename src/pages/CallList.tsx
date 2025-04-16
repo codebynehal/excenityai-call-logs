@@ -6,7 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { CallRecord, fetchCalls, getUserAllowedAssistantIds } from "@/services/vapiService";
+import { 
+  CallRecord, 
+  fetchCalls, 
+  getUserAllowedAssistantIds 
+} from "@/services/vapiService";
 import CallListItem from "@/components/calls/CallListItem";
 import { Phone, PhoneCall, Clock, Filter, Calendar } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
