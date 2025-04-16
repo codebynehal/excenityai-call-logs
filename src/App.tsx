@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "@/components/layout/MainLayout";
 import Index from "@/pages/Index";
 import Login from "@/pages/Login";
@@ -20,46 +20,44 @@ function App() {
   const { user, isAdmin } = useAuth();
 
   return (
-    <Router>
-      <CallProvider>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Index />} />
-            
-            {/* User routes (require login) */}
-            {user ? (
-              <>
-                <Route path="/calls" element={<CallList />} />
-                <Route path="/calls/:callType" element={<CallList />} />
-                <Route path="/calls/details/:callId" element={<CallDetails />} />
-              </>
-            ) : (
-              <>
-                <Route path="/calls/*" element={<Navigate to="/login" replace />} />
-              </>
-            )}
-            
-            {/* Admin routes (require admin login) */}
-            {isAdmin ? (
-              <Route path="/admin" element={<AdminPanel />} />
-            ) : (
-              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-            )}
-            
-            {/* Public routes */}
-            <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-            <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignUp />} />
-            
-            {/* Admin auth routes */}
-            <Route path="/admin/login" element={isAdmin ? <Navigate to="/admin" replace /> : <AdminLogin />} />
-            <Route path="/admin/signup" element={isAdmin ? <Navigate to="/admin" replace /> : <AdminSignUp />} />
-            
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-        <Toaster />
-      </CallProvider>
-    </Router>
+    <CallProvider>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Index />} />
+          
+          {/* User routes (require login) */}
+          {user ? (
+            <>
+              <Route path="/calls" element={<CallList />} />
+              <Route path="/calls/:callType" element={<CallList />} />
+              <Route path="/calls/details/:callId" element={<CallDetails />} />
+            </>
+          ) : (
+            <>
+              <Route path="/calls/*" element={<Navigate to="/login" replace />} />
+            </>
+          )}
+          
+          {/* Admin routes (require admin login) */}
+          {isAdmin ? (
+            <Route path="/admin" element={<AdminPanel />} />
+          ) : (
+            <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+          )}
+          
+          {/* Public routes */}
+          <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+          <Route path="/signup" element={user ? <Navigate to="/" replace /> : <SignUp />} />
+          
+          {/* Admin auth routes */}
+          <Route path="/admin/login" element={isAdmin ? <Navigate to="/admin" replace /> : <AdminLogin />} />
+          <Route path="/admin/signup" element={isAdmin ? <Navigate to="/admin" replace /> : <AdminSignUp />} />
+          
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+      <Toaster />
+    </CallProvider>
   );
 }
 
