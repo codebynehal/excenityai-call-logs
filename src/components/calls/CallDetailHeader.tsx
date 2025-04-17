@@ -33,19 +33,19 @@ const CallDetailHeader = ({ callType, recordingUrl }: CallDetailHeaderProps) => 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon" asChild>
+        <Button variant="outline" size="icon" asChild className="hover-scale">
           <Link to="/calls">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+        <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2 hover-scale">
           {getCallIcon(callType)}
           Call Details
         </h1>
       </div>
       <Button
         variant="outline"
-        className="gap-2 w-full sm:w-auto"
+        className="gap-2 w-full sm:w-auto hover-glow"
         onClick={downloadRecording}
         disabled={!recordingUrl}
       >

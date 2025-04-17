@@ -57,7 +57,7 @@ const CallListContent = ({
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <p className="text-muted-foreground">No calls found</p>
-        <Badge variant="outline" className="mt-2">
+        <Badge variant="outline" className="mt-2 hover-scale">
           {count} total calls
         </Badge>
       </div>
@@ -110,17 +110,17 @@ const CallListContent = ({
         <span className="text-sm text-muted-foreground">
           Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, count)} of {count} calls
         </span>
-        <Badge variant="outline">
+        <Badge variant="outline" className="hover-scale">
           {count} total calls
         </Badge>
       </div>
       
       <Separator />
       
-      <ScrollArea className="flex-1 min-h-[300px] h-[calc(100vh-360px)] rounded-md">
+      <ScrollArea className="flex-1 min-h-[300px] h-[calc(100vh-360px)] sm:h-[calc(100vh-320px)] md:h-[calc(100vh-300px)] rounded-md">
         <div className="grid gap-4 w-full pr-4">
           {calls.map((call) => (
-            <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors w-full">
+            <Card key={call.id} className="cursor-pointer hover-glow transition-all duration-300 w-full">
               <CallListItem 
                 call={call}
                 onClick={() => onCallClick(call.id)}
@@ -137,7 +137,7 @@ const CallListContent = ({
               <PaginationItem>
                 <PaginationPrevious 
                   onClick={() => onPageChange(currentPage - 1)}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover-scale"
                 />
               </PaginationItem>
             )}
@@ -150,7 +150,7 @@ const CallListContent = ({
                   <PaginationLink
                     isActive={page === currentPage}
                     onClick={() => onPageChange(page)}
-                    className="cursor-pointer"
+                    className="cursor-pointer hover-bright"
                   >
                     {page}
                   </PaginationLink>
@@ -162,7 +162,7 @@ const CallListContent = ({
               <PaginationItem>
                 <PaginationNext 
                   onClick={() => onPageChange(currentPage + 1)} 
-                  className="cursor-pointer"
+                  className="cursor-pointer hover-scale"
                 />
               </PaginationItem>
             )}

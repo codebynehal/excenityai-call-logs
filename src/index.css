@@ -136,6 +136,39 @@
   .calls-page .container {
     @apply flex flex-col flex-1;
   }
+  
+  /* Hover animations for UI elements */
+  .hover-scale {
+    @apply transition-transform duration-200 ease-out;
+  }
+  
+  .hover-scale:hover {
+    @apply transform scale-105;
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .hover-glow:hover {
+    @apply shadow-[0_0_15px_rgba(249,115,22,0.4)];
+  }
+  
+  .hover-highlight {
+    @apply transition-colors duration-200 ease-out;
+  }
+  
+  .hover-highlight:hover {
+    @apply bg-accent/10;
+  }
+  
+  .hover-bright {
+    @apply transition-colors duration-200 ease-out;
+  }
+  
+  .hover-bright:hover {
+    @apply brightness-125;
+  }
 }
 
 /* Modern scrollbar for iOS-like appearance */
@@ -173,5 +206,24 @@
   /* Native-like list dividers */
   .list-divider {
     @apply h-2 w-full bg-secondary/20;
+  }
+}
+
+/* Add keyframe animations */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
   }
 }

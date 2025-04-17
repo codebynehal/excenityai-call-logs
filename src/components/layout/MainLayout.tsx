@@ -40,7 +40,7 @@ const MainLayout = () => {
   const isCallsPage = location.pathname.includes('/calls');
 
   return (
-    <div className="flex min-h-screen flex-col w-full overflow-hidden">
+    <div className="flex h-screen flex-col w-full overflow-hidden">
       {!isAuthPage && <Navbar toggleSidebar={toggleSidebar} />}
       <div className="flex flex-1 relative w-full overflow-hidden">
         {!isAuthPage && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}

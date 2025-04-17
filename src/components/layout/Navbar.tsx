@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Phone, ArrowLeft } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -45,16 +46,16 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
       <div className="container flex items-center justify-between h-full px-0 mx-0 md:px-4 max-w-full">
         <div className="flex items-center gap-1 md:gap-2">
           {isMobile && isDetailPage ? (
-            <Button variant="ghost" size="icon" onClick={handleBack} className="mr-1">
+            <Button variant="ghost" size="icon" onClick={handleBack} className="mr-1 hover-scale">
               <ArrowLeft className="h-5 w-5" />
             </Button>
           ) : toggleSidebar && (
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden hover-scale">
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          <Link to="/calls" className="flex items-center gap-1 md:gap-2">
-            <div className="orange-gradient rounded-full p-1.5">
+          <Link to="/calls" className="flex items-center gap-1 md:gap-2 hover-scale transition-transform duration-200">
+            <div className="orange-gradient rounded-full p-1.5 hover-bright">
               <Phone className="h-4 w-4 md:h-5 md:w-5 text-white" />
             </div>
             {!isMobile || !isDetailPage ? (
@@ -74,7 +75,7 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
             <Button
               variant="ghost"
               size="default"
-              className="text-white"
+              className="text-white hover-scale"
               onClick={handleLogout}
             >
               <LogOut className="mr-2 h-4 w-4" />

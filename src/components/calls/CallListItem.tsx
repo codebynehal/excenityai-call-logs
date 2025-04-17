@@ -53,9 +53,9 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
     // Mobile-optimized layout with iOS-like list item style
     return (
       <CardContent className="p-0" onClick={onClick}>
-        <div className="ios-list-item active:bg-secondary/20">
+        <div className="ios-list-item active:bg-secondary/20 hover-highlight">
           <div className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full mr-3",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full mr-3 hover-bright",
             call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
             call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
             "bg-purple-500/10"
@@ -85,11 +85,11 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
 
   // Desktop layout
   return (
-    <CardContent className="p-4" onClick={onClick}>
+    <CardContent className="p-4 hover-highlight transition-all duration-200" onClick={onClick}>
       <div className="grid grid-cols-12 gap-4 items-center">
         <div className="col-span-1">
           <div className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover-scale",
             call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
             call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
             "bg-purple-500/10"
