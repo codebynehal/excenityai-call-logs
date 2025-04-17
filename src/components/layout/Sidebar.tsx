@@ -121,7 +121,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     </>
   );
 
-  // On mobile, use a Sheet component
+  // On mobile, use a Sheet component with improved styling
   if (isMobile) {
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>

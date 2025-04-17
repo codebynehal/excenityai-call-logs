@@ -50,24 +50,24 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
   };
 
   if (isMobile) {
-    // Mobile-optimized layout
+    // Mobile-optimized layout with iOS-like list item style
     return (
-      <CardContent className="p-3" onClick={onClick}>
-        <div className="flex items-center">
+      <CardContent className="p-0" onClick={onClick}>
+        <div className="ios-list-item active:bg-secondary/20">
           <div className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full mr-3",
             call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
             call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
             "bg-purple-500/10"
           )}>
             {getCallIcon()}
           </div>
-          <div className="ml-3 flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden">
             <div className="flex justify-between">
-              <p className="truncate font-medium">
+              <p className="truncate font-medium text-base">
                 {formatPhoneNumber(call.customerPhone)}
               </p>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground ml-2">
                 {getFormattedTimeAgo()}
               </span>
             </div>

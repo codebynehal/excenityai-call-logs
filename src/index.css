@@ -87,7 +87,7 @@
   }
   
   .app-header {
-    @apply sticky top-0 z-40 h-14 flex items-center px-4 border-b bg-background/95 backdrop-blur;
+    @apply sticky top-0 z-40 h-14 flex items-center px-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
   }
   
   .app-content {
@@ -95,7 +95,7 @@
   }
   
   .app-bottom-nav {
-    @apply fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around;
+    @apply fixed bottom-0 left-0 right-0 h-16 border-t bg-background/90 backdrop-blur-md flex items-center justify-around safe-area-bottom;
   }
   
   .app-nav-item {
@@ -104,6 +104,21 @@
   
   .app-card {
     @apply rounded-xl shadow-sm border border-border overflow-hidden;
+  }
+
+  /* iOS-like list styles */
+  .ios-list-item {
+    @apply flex items-center p-3 border-b border-border/50 last:border-0 active:bg-secondary/30;
+  }
+
+  /* iOS-like button */
+  .ios-button {
+    @apply rounded-full bg-primary/90 text-primary-foreground font-medium py-2.5 px-5 active:bg-primary/70 transition-colors;
+  }
+
+  /* iOS-like input */
+  .ios-input {
+    @apply bg-secondary/40 border border-border/50 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-1 focus:ring-primary;
   }
 }
 
@@ -117,5 +132,30 @@
   
   * {
     scrollbar-width: none;
+  }
+
+  /* Add safe area insets for iOS */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  /* Momentum scroll feel */
+  .momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Better tap targets for mobile */
+  button, a, input, select, [role="button"] {
+    @apply min-h-[44px] leading-[44px];
+  }
+  
+  /* Native-like list dividers */
+  .list-divider {
+    @apply h-2 w-full bg-secondary/20;
   }
 }
