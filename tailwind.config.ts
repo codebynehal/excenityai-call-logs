@@ -88,28 +88,75 @@ export default {
       keyframes: {
         'accordion-down': {
           from: {
-            height: '0'
+            height: '0',
+            opacity: '0'
           },
           to: {
-            height: 'var(--radix-accordion-content-height)'
+            height: 'var(--radix-accordion-content-height)',
+            opacity: '1'
           }
         },
         'accordion-up': {
           from: {
-            height: 'var(--radix-accordion-content-height)'
+            height: 'var(--radix-accordion-content-height)',
+            opacity: '1'
           },
           to: {
-            height: '0'
+            height: '0',
+            opacity: '0'
+          }
+        },
+        'pulse-subtle': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' }
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' }
+        },
+        'fadeIn': {
+          from: { 
+            opacity: '0',
+            transform: 'translateY(10px)'
+          },
+          to: { 
+            opacity: '1',
+            transform: 'translateY(0)'
+          }
+        },
+        'attention': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.05)' }
+        },
+        'entrance': {
+          from: {
+            opacity: '0',
+            transform: 'translateY(10px)'
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateY(0)'
           }
         }
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out'
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'fadeIn': 'fadeIn 0.3s ease-out',
+        'attention': 'attention 2s ease-in-out infinite',
+        'entrance': 'entrance 0.5s ease-out forwards'
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'hero-gradient': 'linear-gradient(to right, #f97316, #fdba74, #ffffff)',
+      },
+      transitionProperty: {
+        'height': 'height',
+        'spacing': 'margin, padding',
+        'width': 'width',
+        'position': 'top, right, bottom, left',
       },
     }
   },
