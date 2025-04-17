@@ -3,9 +3,10 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { CallRecord } from "@/services/vapiService";
+import { CallRecord } from "@/services/types/callTypes";
 import CallListItem from "@/components/calls/CallListItem";
 import CallListSkeleton from "@/components/calls/CallListSkeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Pagination, 
   PaginationContent, 
@@ -116,16 +117,18 @@ const CallListContent = ({
       
       <Separator />
       
-      <div className="grid gap-4 w-full">
-        {calls.map((call) => (
-          <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors w-full">
-            <CallListItem 
-              call={call}
-              onClick={() => onCallClick(call.id)}
-            />
-          </Card>
-        ))}
-      </div>
+      <ScrollArea className="h-[calc(100vh-280px)] rounded-md">
+        <div className="grid gap-4 w-full pr-4">
+          {calls.map((call) => (
+            <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors w-full">
+              <CallListItem 
+                call={call}
+                onClick={() => onCallClick(call.id)}
+              />
+            </Card>
+          ))}
+        </div>
+      </ScrollArea>
       
       {totalPages > 1 && (
         <Pagination className="mt-8">

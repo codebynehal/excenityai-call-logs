@@ -36,12 +36,15 @@ const MainLayout = () => {
     };
   }, [isMobile, isAuthPage]);
 
+  // Parse the pathname to determine if we're on a calls page
+  const isCallsPage = location.pathname.includes('/calls');
+
   return (
     <div className="flex min-h-screen flex-col w-full overflow-hidden">
       {!isAuthPage && <Navbar toggleSidebar={toggleSidebar} />}
       <div className="flex flex-1 relative w-full overflow-hidden">
         {!isAuthPage && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
-        <main className={`flex-1 overflow-y-auto momentum-scroll ${isMobile ? 'app-content' : ''} ${isAuthPage ? '' : 'p-2 md:p-6'} ${isMobile && !isAuthPage ? 'pb-20' : ''}`}>
+        <main className={`flex-1 overflow-y-auto momentum-scroll ${isMobile ? 'app-content' : ''} ${isAuthPage ? '' : 'p-2 md:p-6'} ${isMobile && !isAuthPage ? 'pb-20' : ''} ${isCallsPage ? 'calls-page' : ''}`}>
           <Outlet />
         </main>
       </div>
