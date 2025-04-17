@@ -8,7 +8,9 @@ import {
   Calendar, 
   Clock, 
   User, 
-  MessageSquare
+  MessageSquare,
+  PhoneIncoming,
+  Video
 } from "lucide-react";
 
 interface CallListItemProps {
@@ -17,7 +19,37 @@ interface CallListItemProps {
 }
 
 const CallListItem = ({ call, onClick }: CallListItemProps) => {
-  const isInbound = call.callType === "inboundPhoneCall";
+  // Helper function to determine call type properties
+  const getCallTypeProperties = () => {
+    switch(call.callType) {
+      case "inboundPhoneCall":
+        return {
+          icon: <PhoneIncoming className="h-5 w-5 text-primary" />,
+          label: "Inbound",
+          variant: "default"
+        };
+      case "outboundPhoneCall":
+        return {
+          icon: <PhoneOutgoing className="h-5 w-5 text-primary" />,
+          label: "Outbound",
+          variant: "secondary"
+        };
+      case "webCall":
+        return {
+          icon: <Video className="h-5 w-5 text-primary" />,
+          label: "Web Call",
+          variant: "outline"
+        };
+      default:
+        return {
+          icon: <PhoneCall className="h-5 w-5 text-primary" />,
+          label: "Unknown",
+          variant: "outline"
+        };
+    }
+  };
+  
+  const callTypeProps = getCallTypeProperties();
   
   // Function to safely extract and format transcript snippet
   const getTranscriptSnippet = (): string => {
@@ -48,19 +80,15 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
     >
       <div className="flex items-center gap-2">
         <div className="bg-muted rounded-full p-2">
-          {isInbound ? (
-            <PhoneCall className="h-5 w-5 text-primary" />
-          ) : (
-            <PhoneOutgoing className="h-5 w-5 text-primary" />
-          )}
+          {callTypeProps.icon}
         </div>
         <div>
           <h3 className="font-medium">
-            {isInbound ? call.customerPhone : call.assistantPhone}
+            {call.callType === "inboundPhoneCall" ? call.customerPhone : call.assistantPhone}
           </h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant={isInbound ? "default" : "secondary"} className="capitalize">
-              {isInbound ? "Inbound" : "Outbound"}
+            <Badge variant={callTypeProps.variant as any} className="capitalize">
+              {callTypeProps.label}
             </Badge>
             <span className="flex items-center gap-1">
               <User className="h-3 w-3" />

@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Phone, Calendar, Clock, User, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import { Phone, Calendar, Clock, User, PhoneIncoming, PhoneOutgoing, Video } from "lucide-react";
 import { CallRecord } from "@/services/vapiService";
 
 interface CallInfoProps {
@@ -10,15 +10,33 @@ interface CallInfoProps {
 }
 
 const CallInfo = ({ call }: CallInfoProps) => {
-  // Display the call icon based on call type
-  const getCallIcon = (type?: string) => {
-    if (!type) return null;
-    return type === "inboundPhoneCall" ? (
-      <PhoneIncoming className="h-5 w-5 text-green-500" />
-    ) : (
-      <PhoneOutgoing className="h-5 w-5 text-blue-500" />
-    );
+  // Get call type details
+  const getCallTypeDetails = () => {
+    switch (call.callType) {
+      case "inboundPhoneCall":
+        return {
+          icon: <PhoneIncoming className="h-5 w-5 text-green-500" />,
+          label: "Inbound"
+        };
+      case "outboundPhoneCall":
+        return {
+          icon: <PhoneOutgoing className="h-5 w-5 text-blue-500" />,
+          label: "Outbound"
+        };
+      case "webCall":
+        return {
+          icon: <Video className="h-5 w-5 text-purple-500" />,
+          label: "Web Call"
+        };
+      default:
+        return {
+          icon: <Phone className="h-5 w-5 text-gray-500" />,
+          label: "Unknown"
+        };
+    }
   };
+
+  const callTypeDetails = getCallTypeDetails();
 
   return (
     <Card className="border-0 card-gradient shadow">
@@ -36,10 +54,8 @@ const CallInfo = ({ call }: CallInfoProps) => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Call Type</span>
             <div className="flex items-center gap-1.5">
-              {getCallIcon(call.callType)}
-              <span className="font-medium">
-                {call.callType === "outboundPhoneCall" ? "Outbound" : "Inbound"}
-              </span>
+              {callTypeDetails.icon}
+              <span className="font-medium">{callTypeDetails.label}</span>
             </div>
           </div>
           <Separator />

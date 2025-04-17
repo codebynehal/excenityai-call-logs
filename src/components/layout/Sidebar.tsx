@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Phone, PhoneCall, User, X, PhoneIncoming, PhoneOutgoing } from "lucide-react";
+import { Phone, X, PhoneIncoming, PhoneOutgoing, Video, User } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
