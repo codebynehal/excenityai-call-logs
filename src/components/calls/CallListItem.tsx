@@ -3,7 +3,7 @@ import React from "react";
 import { formatDistanceToNow } from "date-fns";
 import { PhoneIncoming, PhoneOutgoing, User, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CallRecord } from "@/services/types/callTypes";
+import { CallRecord } from "@/services/vapiService";
 import { CardContent } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -19,13 +19,13 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
   const getCallIcon = () => {
     switch (call.callType) {
       case "inboundPhoneCall":
-        return <PhoneIncoming className="h-4 w-4 text-green-500 transition-all duration-300 group-hover:scale-125" />;
+        return <PhoneIncoming className="h-4 w-4 text-green-500" />;
       case "outboundPhoneCall":
-        return <PhoneOutgoing className="h-4 w-4 text-blue-500 transition-all duration-300 group-hover:scale-125" />;
+        return <PhoneOutgoing className="h-4 w-4 text-blue-500" />;
       case "webCall":
-        return <Video className="h-4 w-4 text-purple-500 transition-all duration-300 group-hover:scale-125" />;
+        return <Video className="h-4 w-4 text-purple-500" />;
       default:
-        return <PhoneIncoming className="h-4 w-4 text-gray-500 transition-all duration-300 group-hover:scale-125" />;
+        return <PhoneIncoming className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -52,10 +52,10 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
   if (isMobile) {
     // Mobile-optimized layout with iOS-like list item style
     return (
-      <CardContent className="p-0 group" onClick={onClick}>
-        <div className="ios-list-item active:bg-secondary/20 transition-all duration-200 hover:bg-accent/10">
+      <CardContent className="p-0" onClick={onClick}>
+        <div className="ios-list-item active:bg-secondary/20 hover-highlight">
           <div className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full mr-3 transition-all duration-300 group-hover:scale-110",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full mr-3 hover-bright",
             call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
             call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
             "bg-purple-500/10"
@@ -64,14 +64,14 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
           </div>
           <div className="flex-1 overflow-hidden">
             <div className="flex justify-between">
-              <p className="truncate font-medium text-base transition-colors duration-200 group-hover:text-primary">
+              <p className="truncate font-medium text-base">
                 {formatPhoneNumber(call.customerPhone)}
               </p>
               <span className="text-xs text-muted-foreground ml-2">
                 {getFormattedTimeAgo()}
               </span>
             </div>
-            <div className="flex items-center text-xs text-muted-foreground mt-0.5 group-hover:text-muted-foreground/80 transition-colors duration-200">
+            <div className="flex items-center text-xs text-muted-foreground mt-0.5">
               <User className="h-3 w-3 mr-1" />
               <span className="truncate">{call.assistantName}</span>
               <span className="mx-1.5">•</span>
@@ -85,14 +85,11 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
 
   // Desktop layout
   return (
-    <CardContent 
-      className="p-4 transition-all duration-300 group cursor-pointer"
-      onClick={onClick}
-    >
+    <CardContent className="p-4 hover-highlight transition-all duration-200" onClick={onClick}>
       <div className="grid grid-cols-12 gap-4 items-center">
         <div className="col-span-1">
           <div className={cn(
-            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110",
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover-scale",
             call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
             call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
             "bg-purple-500/10"
@@ -102,12 +99,12 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
         </div>
         
         <div className="col-span-3">
-          <p className="font-medium transition-colors duration-200 group-hover:text-primary">{formatPhoneNumber(call.customerPhone)}</p>
+          <p className="font-medium">{formatPhoneNumber(call.customerPhone)}</p>
           <p className="text-sm text-muted-foreground">Customer</p>
         </div>
         
         <div className="col-span-3">
-          <p className="font-medium transition-colors duration-200 group-hover:text-primary">{call.assistantName}</p>
+          <p className="font-medium">{call.assistantName}</p>
           <p className="text-sm text-muted-foreground">Assistant</p>
         </div>
         

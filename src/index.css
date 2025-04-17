@@ -139,11 +139,11 @@
   
   /* Hover animations for UI elements */
   .hover-scale {
-    @apply transition-transform duration-300 ease-out;
+    @apply transition-transform duration-200 ease-out;
   }
   
   .hover-scale:hover {
-    @apply transform scale-110;
+    @apply transform scale-105;
   }
   
   .hover-glow {
@@ -151,55 +151,23 @@
   }
   
   .hover-glow:hover {
-    @apply shadow-[0_0_20px_rgba(249,115,22,0.5)];
+    @apply shadow-[0_0_15px_rgba(249,115,22,0.4)];
   }
   
   .hover-highlight {
-    @apply transition-colors duration-300 ease-out;
+    @apply transition-colors duration-200 ease-out;
   }
   
   .hover-highlight:hover {
-    @apply bg-accent/20;
+    @apply bg-accent/10;
   }
   
   .hover-bright {
-    @apply transition-colors duration-300 ease-out;
+    @apply transition-colors duration-200 ease-out;
   }
   
   .hover-bright:hover {
     @apply brightness-125;
-  }
-  
-  /* Enhanced animations */
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  .animate-pulse-subtle {
-    animation: pulse-subtle 2s ease-in-out infinite;
-  }
-  
-  .btn-pop {
-    @apply transition-all duration-200 hover:scale-105 active:scale-95 transform-gpu;
-  }
-  
-  .link-underline {
-    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
-  }
-  
-  .entrance-animation {
-    animation: entrance 0.5s ease-out forwards;
-  }
-  
-  @keyframes entrance {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 }
 
@@ -247,7 +215,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.8;
   }
 }
 
@@ -256,58 +224,6 @@
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-5px);
   }
-}
-
-/* Attention-grabbing effect for important elements */
-@keyframes attention {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* Smooth page transitions */
-.page-transition {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Interactive ripple effect */
-.ripple {
-  position: relative;
-  overflow: hidden;
-}
-
-.ripple:after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: width 0.6s ease-out, height 0.6s ease-out, opacity 0.6s ease-out;
-}
-
-.ripple:active:after {
-  width: 300%;
-  height: 300%;
-  opacity: 1;
 }
