@@ -38,57 +38,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           <X className="h-5 w-5" />
         </Button>
       </div>
-      <ScrollArea className="flex-1 overflow-auto py-4">
-        <nav className="grid gap-1 px-2">
-          <h3 className="mb-2 px-4 text-sm font-semibold text-muted-foreground">
-            Dashboard
-          </h3>
-          <Button
-            asChild
-            variant={location.pathname === "/calls" ? "secondary" : "ghost"}
-            className="justify-start gap-2"
-          >
-            <Link to="/calls">
-              <PhoneCall className="h-5 w-5" />
-              All Calls
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant={location.pathname === "/calls/inbound" ? "secondary" : "ghost"}
-            className="justify-start gap-2"
-          >
-            <Link to="/calls/inbound">
-              <PhoneIncoming className="h-5 w-5" />
-              Inbound Calls
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant={location.pathname === "/calls/outbound" ? "secondary" : "ghost"}
-            className="justify-start gap-2"
-          >
-            <Link to="/calls/outbound">
-              <PhoneOutgoing className="h-5 w-5" />
-              Outbound Calls
-            </Link>
-          </Button>
-
-          <h3 className="mb-2 mt-6 px-4 text-sm font-semibold text-muted-foreground">
-            Settings
-          </h3>
-          <Button
-            asChild
-            variant={location.pathname === "/profile" ? "secondary" : "ghost"}
-            className="justify-start gap-2"
-          >
-            <Link to="/profile">
-              <User className="h-5 w-5" />
-              Profile
-            </Link>
-          </Button>
-        </nav>
-      </ScrollArea>
+      
       <div className="border-t border-border p-4">
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
