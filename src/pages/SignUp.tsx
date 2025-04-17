@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,19 +23,17 @@ export default function SignUp() {
       const { error } = await signUp(email, password, name);
       
       if (error) {
-        toast("Sign up failed", {
-          description: error.message,
-          variant: "destructive"
+        toast.error("Sign up failed", {
+          description: error.message
         });
       } else {
-        toast("Account created successfully", {
-          description: "Please check your email to verify your account",
+        toast.success("Account created successfully", {
+          description: "Please check your email to verify your account"
         });
       }
     } catch (err: any) {
-      toast("Sign up failed", {
-        description: err.message || "An unexpected error occurred",
-        variant: "destructive"
+      toast.error("Sign up failed", {
+        description: err.message || "An unexpected error occurred"
       });
     } finally {
       setIsLoading(false);

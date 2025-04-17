@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Phone, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -23,7 +22,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { toast } = useToast();
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -42,23 +40,18 @@ export default function Login() {
       const { error } = await signIn(values.email, values.password);
       
       if (error) {
-        toast({
-          title: "Login failed",
-          description: error.message,
-          variant: "destructive"
+        toast.error("Login failed", {
+          description: error.message
         });
       } else {
-        toast({
-          title: "Logged in successfully",
+        toast.success("Logged in successfully", {
           description: "Welcome back to Excenity AI Dashboard"
         });
         navigate("/calls");
       }
     } catch (err: any) {
-      toast({
-        title: "Login failed",
-        description: err.message || "An unexpected error occurred",
-        variant: "destructive"
+      toast.error("Login failed", {
+        description: err.message || "An unexpected error occurred"
       });
     } finally {
       setIsLoading(false);

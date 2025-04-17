@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, Phone, ArrowLeft } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -31,9 +30,8 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
       });
     } catch (error) {
       console.error("Logout error:", error);
-      toast("Logout failed", {
-        description: "There was an issue logging you out",
-        variant: "destructive"
+      toast.error("Logout failed", {
+        description: "There was an issue logging you out"
       });
     }
   };
