@@ -15,6 +15,7 @@ type AuthContextType = {
   adminSignOut: () => Promise<void>; 
 };
 
+// Create context with explicit undefined initial value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
