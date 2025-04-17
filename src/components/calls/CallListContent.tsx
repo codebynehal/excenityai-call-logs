@@ -105,7 +105,7 @@ const CallListContent = ({
   };
   
   return (
-    <div className="space-y-4 w-full">
+    <div className="space-y-4 w-full flex flex-col h-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <span className="text-sm text-muted-foreground">
           Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, count)} of {count} calls
@@ -117,7 +117,7 @@ const CallListContent = ({
       
       <Separator />
       
-      <ScrollArea className="h-[calc(100vh-280px)] rounded-md">
+      <ScrollArea className="flex-1 min-h-[300px] h-[calc(100vh-360px)] rounded-md">
         <div className="grid gap-4 w-full pr-4">
           {calls.map((call) => (
             <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors w-full">
@@ -131,7 +131,7 @@ const CallListContent = ({
       </ScrollArea>
       
       {totalPages > 1 && (
-        <Pagination className="mt-8">
+        <Pagination className="mt-2 pb-4">
           <PaginationContent className="flex-wrap justify-center">
             {currentPage > 1 && (
               <PaginationItem>

@@ -91,7 +91,7 @@
   }
   
   .app-content {
-    @apply flex-1 overflow-y-auto pb-16 px-3 py-2;
+    @apply flex-1 overflow-y-auto pb-16 px-3 py-2 flex flex-col;
   }
   
   .app-bottom-nav {
@@ -127,6 +127,14 @@
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     height: 100%;
+  }
+  
+  .calls-page {
+    @apply flex flex-col h-full;
+  }
+  
+  .calls-page .container {
+    @apply flex flex-col flex-1;
   }
 }
 
