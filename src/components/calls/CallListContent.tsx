@@ -104,8 +104,8 @@ const CallListContent = ({
   };
   
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between">
+    <div className="space-y-4 w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <span className="text-sm text-muted-foreground">
           Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, count)} of {count} calls
         </span>
@@ -116,9 +116,9 @@ const CallListContent = ({
       
       <Separator />
       
-      <div className="grid gap-4">
+      <div className="grid gap-4 w-full">
         {calls.map((call) => (
-          <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors">
+          <Card key={call.id} className="cursor-pointer hover:bg-muted/50 transition-colors w-full">
             <CallListItem 
               call={call}
               onClick={() => onCallClick(call.id)}
@@ -129,7 +129,7 @@ const CallListContent = ({
       
       {totalPages > 1 && (
         <Pagination className="mt-8">
-          <PaginationContent>
+          <PaginationContent className="flex-wrap justify-center">
             {currentPage > 1 && (
               <PaginationItem>
                 <PaginationPrevious 

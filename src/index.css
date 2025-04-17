@@ -51,8 +51,16 @@
     @apply border-border;
   }
 
+  html, body {
+    @apply h-full w-full overflow-hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+  
+  #root {
+    @apply h-full w-full max-w-full m-0 p-0;
   }
 }
 

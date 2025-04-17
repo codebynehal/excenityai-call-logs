@@ -164,14 +164,14 @@ const CallList = () => {
   };
 
   return (
-    <div className="container py-6 max-w-5xl">
-      <div className="flex flex-col gap-6">
+    <div className="container py-4 max-w-5xl px-2 sm:px-4 md:px-6 mx-auto">
+      <div className="flex flex-col gap-4 sm:gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-col">
             <h1 className="text-2xl font-bold tracking-tight">Call History</h1>
             <p className="text-sm text-muted-foreground">{getLastFetchedText()}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Button 
               variant="outline" 
               size="sm" 

@@ -18,7 +18,7 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   return (
     <div
       className={cn(
-        "fixed inset-y-0 left-0 z-20 flex h-full w-[280px] flex-col border-r border-border bg-sidebar transition-transform duration-300 md:relative md:translate-x-0",
+        "fixed inset-y-0 left-0 z-30 flex h-full w-[280px] flex-col border-r border-border bg-sidebar transition-transform duration-300 md:relative md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >
@@ -39,21 +39,23 @@ export function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         </Button>
       </div>
       
-      <div className="border-t border-border p-4">
-        <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
-            <span className="text-sm font-medium text-white">
-              {user?.email?.charAt(0).toUpperCase() || 'U'}
-            </span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-white">
-              {user?.user_metadata?.first_name || 'User'}
-            </span>
-            <span className="text-xs text-muted-foreground">{user?.email || 'user@example.com'}</span>
+      <ScrollArea className="flex-1">
+        <div className="border-t border-border p-4">
+          <div className="flex items-center gap-2 rounded-lg bg-muted p-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
+              <span className="text-sm font-medium text-white">
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-white">
+                {user?.user_metadata?.first_name || 'User'}
+              </span>
+              <span className="text-xs text-muted-foreground">{user?.email || 'user@example.com'}</span>
+            </div>
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

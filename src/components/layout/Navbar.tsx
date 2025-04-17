@@ -39,7 +39,7 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
   };
 
   return (
-    <div className="sticky top-0 z-30 flex h-16 items-center border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex items-center justify-between">
         <div className="flex items-center gap-2">
           {toggleSidebar && (
