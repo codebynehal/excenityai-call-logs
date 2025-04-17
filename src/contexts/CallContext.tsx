@@ -36,7 +36,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
   // Load calls on component mount or when user/isAdmin changes
   useEffect(() => {
-    refreshCalls();
+    if (user) {
+      refreshCalls();
+    }
   }, [user, isAdmin]);
 
   return (
