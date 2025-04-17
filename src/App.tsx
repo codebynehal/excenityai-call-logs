@@ -11,7 +11,7 @@ import AdminLogin from "@/pages/AdminLogin";
 import AdminSignUp from "@/pages/AdminSignUp";
 import AdminPanel from "@/pages/AdminPanel";
 import { useAuth } from "@/contexts/AuthContext";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import { CallProvider } from "@/contexts/CallContext";
 
 import "./App.css";

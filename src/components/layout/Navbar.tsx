@@ -4,7 +4,7 @@ import { LogOut, Menu, Phone, ArrowLeft } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface NavbarProps {
   toggleSidebar?: () => void;
@@ -13,7 +13,6 @@ interface NavbarProps {
 export function Navbar({ toggleSidebar }: NavbarProps) {
   const isMobile = useIsMobile();
   const { signOut, adminSignOut, isAdmin, user } = useAuth();
-  const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -27,14 +26,12 @@ export function Navbar({ toggleSidebar }: NavbarProps) {
       } else {
         await signOut();
       }
-      toast({
-        title: "Logged out successfully",
+      toast("Logged out successfully", {
         description: "You have been logged out of your account"
       });
     } catch (error) {
       console.error("Logout error:", error);
-      toast({
-        title: "Logout failed",
+      toast("Logout failed", {
         description: "There was an issue logging you out",
         variant: "destructive"
       });
