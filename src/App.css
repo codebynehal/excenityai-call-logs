@@ -8,6 +8,29 @@
   padding: 0;
 }
 
+/* Mobile app specific styles */
+@media (max-width: 768px) {
+  body {
+    /* iOS-like overscroll effect */
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+    /* Prevent text selection */
+    user-select: none;
+    -webkit-user-select: none;
+    /* Remove tap highlight */
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Add safe area inset support for modern iOS */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
 /* Keep animation styles */
 @keyframes logo-spin {
   from {

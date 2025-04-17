@@ -1,131 +1,124 @@
 
 import React from "react";
-import { CallRecord } from "@/services/types/callTypes";
-import { Badge } from "@/components/ui/badge";
-import { 
-  PhoneCall, 
-  PhoneOutgoing,
-  Calendar, 
-  Clock, 
-  User, 
-  MessageSquare,
-  PhoneIncoming,
-  Video
-} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { PhoneIncoming, PhoneOutgoing, User, Video } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CallRecord } from "@/services/vapiService";
+import { CardContent } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CallListItemProps {
   call: CallRecord;
-  onClick?: () => void;
+  onClick: () => void;
 }
 
 const CallListItem = ({ call, onClick }: CallListItemProps) => {
-  // Helper function to determine call type properties
-  const getCallTypeProperties = () => {
-    switch(call.callType) {
+  const isMobile = useIsMobile();
+
+  // Get icon based on call type
+  const getCallIcon = () => {
+    switch (call.callType) {
       case "inboundPhoneCall":
-        return {
-          icon: <PhoneIncoming className="h-5 w-5 text-primary" />,
-          label: "Inbound",
-          variant: "default"
-        };
+        return <PhoneIncoming className="h-4 w-4 text-green-500" />;
       case "outboundPhoneCall":
-        return {
-          icon: <PhoneOutgoing className="h-5 w-5 text-primary" />,
-          label: "Outbound",
-          variant: "secondary"
-        };
+        return <PhoneOutgoing className="h-4 w-4 text-blue-500" />;
       case "webCall":
-        return {
-          icon: <Video className="h-5 w-5 text-primary" />,
-          label: "Web Call",
-          variant: "outline"
-        };
+        return <Video className="h-4 w-4 text-purple-500" />;
       default:
-        return {
-          icon: <PhoneCall className="h-5 w-5 text-primary" />,
-          label: "Unknown",
-          variant: "outline"
-        };
+        return <PhoneIncoming className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  // Format date for display
+  const getFormattedTimeAgo = () => {
+    try {
+      const callDate = new Date(`${call.date} ${call.time}`);
+      return formatDistanceToNow(callDate, { addSuffix: true });
+    } catch (error) {
+      return `${call.date} ${call.time}`;
     }
   };
   
-  const callTypeProps = getCallTypeProperties();
-  
-  // Function to determine which phone number to display
-  const getDisplayPhoneNumber = () => {
-    if (call.callType === "outboundPhoneCall") {
-      return call.customerPhone; // Always show customer number for outbound calls
-    } else {
-      return call.customerPhone; // For inbound and web calls
+  // Format phone number
+  const formatPhoneNumber = (phone: string) => {
+    if (!phone) return "";
+    const cleaned = phone.replace(/\D/g, "");
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
     }
+    return phone;
   };
-  
-  // Function to safely extract and format transcript snippet
-  const getTranscriptSnippet = (): string => {
-    if (!call.transcript) return "";
-    
-    // Handle array transcript
-    if (Array.isArray(call.transcript) && call.transcript.length > 0) {
-      const firstMessage = call.transcript[0];
-      if (firstMessage && typeof firstMessage.message === 'string') {
-        const message = firstMessage.message;
-        return message.length > 30 ? `${message.slice(0, 30)}...` : message;
-      }
-    }
-    
-    // Handle string transcript (fallback)
-    if (typeof call.transcript === 'string') {
-      const transcriptStr = call.transcript as string;
-      return transcriptStr.length > 30 ? `${transcriptStr.slice(0, 30)}...` : transcriptStr;
-    }
-    
-    return "No transcript available";
-  };
-  
-  return (
-    <div 
-      className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer" 
-      onClick={onClick}
-    >
-      <div className="flex items-center gap-2">
-        <div className="bg-muted rounded-full p-2">
-          {callTypeProps.icon}
-        </div>
-        <div>
-          <h3 className="font-medium">
-            {getDisplayPhoneNumber()}
-          </h3>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Badge variant={callTypeProps.variant as any} className="capitalize">
-              {callTypeProps.label}
-            </Badge>
-            <span className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span className="truncate max-w-[120px]">
-                {call.assistantName || "Unknown Assistant"}
+
+  if (isMobile) {
+    // Mobile-optimized layout
+    return (
+      <CardContent className="p-3" onClick={onClick}>
+        <div className="flex items-center">
+          <div className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
+            call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
+            call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
+            "bg-purple-500/10"
+          )}>
+            {getCallIcon()}
+          </div>
+          <div className="ml-3 flex-1 overflow-hidden">
+            <div className="flex justify-between">
+              <p className="truncate font-medium">
+                {formatPhoneNumber(call.customerPhone)}
+              </p>
+              <span className="text-xs text-muted-foreground">
+                {getFormattedTimeAgo()}
               </span>
-            </span>
+            </div>
+            <div className="flex items-center text-xs text-muted-foreground mt-0.5">
+              <User className="h-3 w-3 mr-1" />
+              <span className="truncate">{call.assistantName}</span>
+              <span className="mx-1.5">•</span>
+              <span>{call.duration}</span>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Calendar className="h-3 w-3" />
-          <span>{call.date}</span>
-        </div>
-        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          <span>{call.time}</span>
-        </div>
-        {call.transcript && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <MessageSquare className="h-3 w-3" />
-            <span>{getTranscriptSnippet()}</span>
+      </CardContent>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <CardContent className="p-4" onClick={onClick}>
+      <div className="grid grid-cols-12 gap-4 items-center">
+        <div className="col-span-1">
+          <div className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
+            call.callType === "inboundPhoneCall" ? "bg-green-500/10" : 
+            call.callType === "outboundPhoneCall" ? "bg-blue-500/10" : 
+            "bg-purple-500/10"
+          )}>
+            {getCallIcon()}
           </div>
-        )}
+        </div>
+        
+        <div className="col-span-3">
+          <p className="font-medium">{formatPhoneNumber(call.customerPhone)}</p>
+          <p className="text-sm text-muted-foreground">Customer</p>
+        </div>
+        
+        <div className="col-span-3">
+          <p className="font-medium">{call.assistantName}</p>
+          <p className="text-sm text-muted-foreground">Assistant</p>
+        </div>
+        
+        <div className="col-span-2">
+          <p className="font-medium">{call.duration}</p>
+          <p className="text-sm text-muted-foreground">Duration</p>
+        </div>
+        
+        <div className="col-span-3 text-right">
+          <p className="font-medium">{call.date}</p>
+          <p className="text-sm text-muted-foreground">{call.time}</p>
+        </div>
       </div>
-    </div>
+    </CardContent>
   );
 };
 

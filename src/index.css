@@ -53,6 +53,10 @@
 
   html, body {
     @apply h-full w-full overflow-hidden;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -75,5 +79,43 @@
   
   .glass-card {
     @apply bg-secondary/40 backdrop-blur-sm border border-white/10;
+  }
+  
+  /* Mobile app style classes */
+  .app-container {
+    @apply h-full w-full max-w-full overflow-hidden flex flex-col;
+  }
+  
+  .app-header {
+    @apply sticky top-0 z-40 h-14 flex items-center px-4 border-b bg-background/95 backdrop-blur;
+  }
+  
+  .app-content {
+    @apply flex-1 overflow-y-auto pb-16 px-3 py-2;
+  }
+  
+  .app-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around;
+  }
+  
+  .app-nav-item {
+    @apply flex flex-col items-center justify-center w-full h-full text-xs;
+  }
+  
+  .app-card {
+    @apply rounded-xl shadow-sm border border-border overflow-hidden;
+  }
+}
+
+/* Modern scrollbar for iOS-like appearance */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    background: transparent;
+  }
+  
+  * {
+    scrollbar-width: none;
   }
 }
