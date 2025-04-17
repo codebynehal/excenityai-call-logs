@@ -12,7 +12,10 @@ import { DirectionProvider } from "@radix-ui/react-direction";
 // Initialize React Query client
 const queryClient = new QueryClient();
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+// Create root first, then render within it
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+
+root.render(
   <React.StrictMode>
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
