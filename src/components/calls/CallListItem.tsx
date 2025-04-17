@@ -51,6 +51,15 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
   
   const callTypeProps = getCallTypeProperties();
   
+  // Function to determine which phone number to display
+  const getDisplayPhoneNumber = () => {
+    if (call.callType === "outboundPhoneCall") {
+      return call.customerPhone; // Always show customer number for outbound calls
+    } else {
+      return call.customerPhone; // For inbound and web calls
+    }
+  };
+  
   // Function to safely extract and format transcript snippet
   const getTranscriptSnippet = (): string => {
     if (!call.transcript) return "";
@@ -84,7 +93,7 @@ const CallListItem = ({ call, onClick }: CallListItemProps) => {
         </div>
         <div>
           <h3 className="font-medium">
-            {call.callType === "inboundPhoneCall" ? call.customerPhone : call.assistantPhone}
+            {getDisplayPhoneNumber()}
           </h3>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant={callTypeProps.variant as any} className="capitalize">
